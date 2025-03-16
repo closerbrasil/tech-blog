@@ -1,0 +1,32 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+ ### Components Location Rule
+
+This rule establishes standards for component organization in the project.
+
+## Component Directory Structure
+
+- All components MUST be placed in the root `/components` directory
+- Components should NOT be placed inside the `/app` directory
+- The only exception is for `page.tsx`, `layout.tsx`, `loading.tsx`, and `error.tsx` files that are required by Next.js App Router
+
+## Organization Guidelines
+
+- Group related components in subdirectories under `/components`
+- Use clear, descriptive names for component files and directories
+- Keep component files focused and single-responsibility
+- Export components through index files in each subdirectory
+
+## Examples
+
+✅ Correct structure:
+/components
+/admin
+StatsCard.tsx
+/ui
+Button.tsx
+/articles
+ArticleCard.tsx

@@ -1,0 +1,54 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Objective
+Establish Bun as the standard JavaScript/TypeScript runtime and package manager whenever applicable, aiming to improve performance and efficiency in the development environment.
+
+## Scope of Application
+This rule applies to all new projects and, when feasible, to existing projects that can be migrated without significant impact.
+
+## Guidelines
+
+1. **New Projects**:
+   - Initialize all new JavaScript/TypeScript projects with Bun (`bun init`) instead of Node.js/npm/Yarn, except when there are specific requirements that Bun cannot meet.
+
+2. **Script Execution**:
+   - Use `bun run` for script execution instead of `node` or `npm run`.
+   - Configure scripts in `package.json` to explicitly use Bun.
+
+3. **Dependency Management**:
+   - Use `bun install` for package installation instead of `npm install` or `yarn add`.
+   - Keep `bun.lockb` in version control to ensure consistency across environments.
+
+4. **Testing**:
+   - Utilize Bun's integrated test runner (`bun test`) when compatible with the project's testing framework.
+
+5. **Transpilation and Bundling**:
+   - Leverage Bun's native capabilities for transpilation and bundling before resorting to external tools.
+
+6. **Allowed Exceptions**:
+   - Projects that depend on specific Node.js features not available in Bun.
+   - Libraries or frameworks with known incompatibilities with Bun.
+   - Production environments that require Node.js for stability or support reasons.
+
+7. **Documentation**:
+   - Clearly document in the project's README.md that Bun is used and provide installation instructions.
+   - Include basic Bun commands relevant to the project.
+
+## Implementation
+1. Install Bun globally on all development machines.
+2. Update project templates and CI/CD pipelines to support Bun.
+3. Conduct workshops or share resources to familiarize the team with Bun.
+
+## Review
+This rule will be reviewed quarterly to evaluate:
+- Bun's stability and maturity
+- Compatibility with the libraries and frameworks used
+- Development team feedback
+- Impact on productivity and performance
+
+---
+
+*Note: Bun is an evolving technology. Stay updated on its capabilities and limitations at [bun.sh](https://bun.sh).*

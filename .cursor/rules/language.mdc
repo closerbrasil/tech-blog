@@ -1,0 +1,28 @@
+---
+description: This rule establishes language guidelines for all interactions with the user while maintaining technical standards for code and system operations.
+globs: 
+alwaysApply: true
+---
+### User Communication Protocol
+
+- Always respond to the user in Portuguese for all direct communications
+- Maintain a formal but conversational tone in Portuguese responses
+- Use proper Portuguese grammar, accentuation, and punctuation
+- Adapt technical terminology to Portuguese when appropriate, but include English terms in parentheses when necessary for clarity
+- Ensure all explanations are clear and accessible to Portuguese speakers
+
+### Technical Implementation Standards
+
+- All code, variable names, function names, and comments within code blocks must be written in English
+- Database queries, API endpoints, and system commands must be maintained in English
+- File names, directory structures, and configuration files should use English naming conventions
+- Documentation for developers should be written in English
+- Web searches and external resource queries must be performed in English for maximum compatibility
+
+### Translation Considerations
+
+- When referencing technical documentation, translate key concepts to Portuguese in the explanation while preserving the original English terms
+- For error messages displayed in the system, provide both the original English error and a Portuguese explanation
+- When discussing third-party tools or libraries, use their original English names but explain their function in Portuguese
+
+This rule ensures that the user receives information in their preferred language (Portuguese) while maintaining international technical standards and compatibility with global development practices.

@@ -1,0 +1,54 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Understanding Project Structure
+
+1. Always begin by understanding the project's overall architecture and organization.
+2. Identify the main components, modules, and their relationships.
+3. Review the project's configuration files and environment settings.
+4. Understand the build system, dependencies, and deployment process.
+5. Familiarize yourself with coding standards and patterns used in the project.
+6. Review documentation to understand the intended functionality.
+
+## Problem Identification
+
+1. Analyze the error or unexpected behavior accurately, recording complete error messages.
+2. Identify the exact context where the problem occurs (file, line, function).
+3. Verify if the problem is reproducible and document the steps to reproduce it.
+4. Isolate the scope of the problem - determine if it's localized or systemic.
+5. Examine logs and stack traces to identify the point of failure.
+
+## Root Cause Analysis
+
+1. Examine the suspicious code line by line.
+2. Check data types and values in critical variables.
+3. Identify possible unhandled edge cases.
+4. Verify the implemented business logic against the specification.
+5. Analyze dependencies and interactions between related components.
+6. Confirm that libraries and frameworks are being used correctly.
+
+## Applying the Fix
+
+1. Implement the simplest fix that resolves the specific problem.
+2. Modify only the code necessary for the correction.
+3. Maintain consistency with the existing coding style.
+4. Document the change with clear comments explaining the problem and solution.
+5. Add tests that specifically validate the implemented fix.
+6. Verify that the fix doesn't introduce new problems.
+
+## Validating the Fix
+
+1. Run relevant unit and integration tests.
+2. Verify that the original problem no longer occurs.
+3. Confirm that related functionalities continue to operate correctly.
+4. Validate the fix in all applicable environments.
+5. Measure the impact of the fix on performance, if relevant.
+
+## Documentation and Communication
+
+1. Record the root cause and solution in the issue tracking system.
+2. Communicate the fix to relevant stakeholders.
+3. Update technical documentation, if necessary.
+4. Share knowledge about the problem to prevent future recurrences.

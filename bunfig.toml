@@ -1,0 +1,23 @@
+[install]
+peer = true
+production = false
+optional = true
+
+# Comentando a configuração de escopo que está causando o erro
+# [install.scopes]
+# next = "workspace:*"
+
+[test]
+coverage = true
+preload = "./setup.ts"
+
+[debug]
+inspect-wait = true
+
+[run]
+bun = true
+env = { NODE_ENV = "development" }
+
+[build]
+minify = true
+sourcemap = "external" 

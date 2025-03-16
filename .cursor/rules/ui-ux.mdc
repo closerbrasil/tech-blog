@@ -1,0 +1,179 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+### Core Objectives
+- Create Next.js solutions that prioritize mobile-first design and responsive layouts
+- Implement adaptive UI patterns that gracefully scale across device sizes
+- Maintain performance optimization and best practices across all viewports
+
+### Mobile-First Architecture
+- Start all component designs from mobile viewport first
+- Implement progressive enhancement for larger screens
+- Use fluid typography and spacing units
+- Implement touch-friendly interaction patterns
+
+### Responsive Design Principles
+- Use relative units (rem, em, vh, vw) over fixed pixels
+- Implement container queries for component-level responsiveness
+- Use CSS Grid and Flexbox for flexible layouts
+- Define consistent breakpoint strategy:
+  ```tsx
+  const breakpoints = {
+    mobile: '320px',
+    tablet: '768px',
+    laptop: '1024px',
+    desktop: '1280px',
+  }
+  ```
+
+### Code Style and Structure
+- Write semantic, accessible HTML
+- Use TypeScript with strict type checking
+- Implement modular, reusable components
+- Follow functional programming patterns
+- Use descriptive naming conventions
+
+### Next.js 14+ Optimizations
+- Leverage App Router architecture
+- Implement Server Components by default
+- Use Server Actions for data mutations
+- Implement Partial Prerendering
+- Utilize Streaming and Suspense
+- Configure dynamic metadata
+
+### Responsive Image Strategy
+```tsx
+<Image
+  src="/image.webp"
+  alt="Description"
+  width={1200}
+  height={800}
+  sizes="(max-width: 768px) 100vw, 
+         (max-width: 1200px) 50vw,
+         33vw"
+  priority={isAboveFold}
+  className="w-full h-auto object-cover"
+/>
+```
+
+### UI and Component Structure
+- Implement Atomic Design methodology
+- Use CSS-in-JS or Tailwind with responsive utilities
+- Create adaptive layouts using CSS Grid/Flexbox
+- Implement touch-friendly interaction areas (min 44x44px)
+
+### Performance Optimization
+- Implement responsive lazy loading
+- Use dynamic imports for route-based code splitting
+- Optimize images and assets per device
+- Implement critical CSS path
+- Use partial hydration strategies
+
+### State Management and Data
+- Implement responsive data fetching strategies
+- Use TanStack Query for data management
+- Implement Zustand for minimal global state
+- Use Zod for type-safe validations
+
+### Error Handling and Loading States
+- Implement responsive error boundaries
+- Create adaptive loading skeletons
+- Use error.tsx and loading.tsx
+- Implement toast notifications responsively
+
+### Security and Validation
+- Implement CSRF protection
+- Use Content Security Policy headers
+- Sanitize user inputs
+- Implement rate limiting
+- Configure CORS appropriately
+
+### Testing Strategy
+- Test across multiple viewport sizes
+- Implement responsive E2E tests
+- Use Jest and React Testing Library
+- Test touch interactions
+
+### Example Component Structure:
+```tsx
+// components/card/responsive-card.tsx
+'use client'
+
+import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+
+interface ResponsiveCardProps {
+  title: string
+  content: string
+  className?: string
+}
+
+export function ResponsiveCard({ 
+  title, 
+  content, 
+  className 
+}: ResponsiveCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  return (
+    <motion.div
+      className={cn(
+        "w-full rounded-lg p-4",
+        "md:p-6 lg:p-8",
+        "touch-target:min-h-[44px]",
+        className
+      )}
+      layout
+    >
+      <h2 className="text-base md:text-lg lg:text-xl">
+        {title}
+      </h2>
+      <p className="text-sm md:text-base">
+        {content}
+      </p>
+    </motion.div>
+  )
+}
+```
+
+### Implementation Process
+1. **Mobile Design First**
+   - Start with mobile wireframes
+   - Define core functionality
+   - Establish touch interactions
+
+2. **Progressive Enhancement**
+   - Add tablet adaptations
+   - Implement desktop enhancements
+   - Optimize for larger screens
+
+3. **Performance Validation**
+   - Test on real devices
+   - Validate performance metrics
+   - Optimize pain points
+
+4. **Accessibility Review**
+   - Verify WCAG compliance
+   - Test screen readers
+   - Validate keyboard navigation
+
+5. **Final Optimization**
+   - Implement analytics
+   - Add error tracking
+   - Deploy with monitoring
+
+### Quality Checklist
+- [ ] Mobile-first implementation
+- [ ] Responsive breakpoints defined
+- [ ] Touch interactions optimized
+- [ ] Performance metrics met
+- [ ] Accessibility validated
+- [ ] Cross-browser tested
+- [ ] Error handling implemented
+- [ ] Analytics configured
+
+Follow this structured approach for every feature implementation, ensuring consistent, responsive, and performant results across all device sizes.
+```

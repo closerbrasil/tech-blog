@@ -1,0 +1,31 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 📜 Rule: Project Architecture and Technology Stack
+
+This project follows a **structured and scalable** architecture, combining **NestJS, Next.js, and TailwindCSS** to ensure efficiency, performance, and maintainability.  
+
+### 🔹 **Technology Stack**
+- **Backend:** NestJS (API REST/GraphQL, authentication, database)
+- **Frontend:** Next.js (React with SSR, SSG, and API consumption)
+- **Styling:** TailwindCSS (efficient and responsive design)
+
+### 🔹 **Integration Guidelines**
+1. **NestJS as the Backend**  
+   - Must expose API endpoints (`/api/...`) to be consumed by Next.js.  
+   - Should handle authentication, business logic, and database operations.  
+
+2. **Next.js as the Frontend**  
+   - Must consume NestJS API using `fetch` or `React Query`.  
+   - Can use **SSR, SSG, or CSR**, depending on the use case.  
+
+3. **TailwindCSS for Styling**  
+   - Must be used for all UI styling.  
+   - No external CSS frameworks unless approved.  
+
+### 🔹 **Enforcement**
+- Any deviation from this architecture requires **explicit approval**.  
+- Contributions must follow this **technology stack and integration structure**.  
+- The goal is to ensure a **simple, scalable, and efficient** development workflow. 🚀  
