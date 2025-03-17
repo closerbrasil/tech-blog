@@ -6,9 +6,9 @@ export async function GET() {
     const result = await mcp_neon_run_sql({
       params: {
         sql: `
-          SELECT id, name 
-          FROM youtube_category 
-          ORDER BY name ASC
+          SELECT id, nome as name 
+          FROM categorias 
+          ORDER BY nome ASC
         `
       }
     });

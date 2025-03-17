@@ -1,7 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import MuxPlayer from '@mux/mux-player-react';
+import dynamic from 'next/dynamic';
+import { useRef } from 'react';
+
+const MuxPlayer = dynamic(
+  () => import('@mux/mux-player-react').then((mod) => mod.default),
+  { ssr: false }
+);
 
 interface VideoPlayerProps {
   videoId: string;
@@ -10,18 +15,22 @@ interface VideoPlayerProps {
 }
 
 export default function VideoPlayer({ videoId, title, poster }: VideoPlayerProps) {
+  const playerRef = useRef(null);
+
   return (
     <MuxPlayer
+      ref={playerRef}
       streamType="on-demand"
       playbackId={videoId}
       metadata={{
+        video_id: videoId,
         video_title: title,
-        player_name: "Tech Blog Player",
+        viewer_user_id: 'anonymous'
       }}
       poster={poster}
-      thumbnailTime={0}
-      primaryColor="#64748b"
-      secondaryColor="#334155"
+      autoPlay={false}
+      muted={false}
+      accentColor="#3b82f6"
       className="w-full aspect-video rounded-xl overflow-hidden"
     />
   );

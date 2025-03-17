@@ -11,9 +11,14 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'ghi1kcb6knkec3zk.public.blob.vercel-storage.com',
+        hostname: 'stream.mux.com',
         pathname: '**',
       },
+      {
+        protocol: 'https',
+        hostname: 'ghi1kcb6knkec3zk.public.blob.vercel-storage.com',
+        pathname: '**',
+      }
     ],
   },
 };

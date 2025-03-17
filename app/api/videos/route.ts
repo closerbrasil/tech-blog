@@ -15,8 +15,8 @@ export async function GET() {
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           SELECT * FROM videos 
-          WHERE status = 'POSTED' 
-          ORDER BY publicado_em DESC
+          WHERE status = 'publicado' AND visibilidade = 'publico'
+          ORDER BY criado_em DESC
         `
       }
     });
@@ -59,23 +59,22 @@ export async function POST(request: Request) {
     const data = await request.json();
     const validatedData = insertVideoSchema.parse({
       ...data,
-      status: data.status || 'DRAFT',
-      visibilidade: data.visibilidade || 'PRIVADO',
+      status: data.status || 'rascunho',
+      visibilidade: data.visibilidade || 'privado',
       meta_descricao: data.meta_descricao || data.descricao,
-      conteudo: data.conteudo || data.descricao,
-      recursos: data.recursos || '[]',
-      capitulos: data.capitulos || '[]',
-      plataforma: data.plataforma || 'mux'
+      transcricao: data.transcricao || data.descricao,
+      keywords: data.keywords || [],
+      origem: data.origem || 'mux'
     });
 
     const id = uuidv4();
     const now = new Date().toISOString();
     
     // Preparar campos e valores para a inserção
-    const fields = ['id', 'publicado_em', 'atualizado_em', ...Object.keys(validatedData)];
+    const fields = ['id', 'criado_em', 'atualizado_em', ...Object.keys(validatedData)];
     const values = fields.map(field => {
       if (field === 'id') return `'${id}'`;
-      if (field === 'publicado_em' || field === 'atualizado_em') return `'${now}'`;
+      if (field === 'criado_em' || field === 'atualizado_em') return `'${now}'`;
       
       const value = validatedData[field as keyof typeof validatedData];
       if (value === null || value === undefined) {
@@ -116,7 +115,7 @@ export async function POST(request: Request) {
         return new NextResponse(
           JSON.stringify({ 
             error: "Erro de referência",
-            details: "O valor de categoria_id ou autor_id não corresponde a registros existentes."
+            details: "O valor de categoria_id não corresponde a um registro existente."
           }),
           {
             status: 400,

@@ -143,18 +143,46 @@ async function saveToDatabase(data: {
     throw new Error('Dados incompletos para salvar no banco de dados');
   }
 
+  const now = new Date().toISOString();
+  const slug = data.title.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
   const result = await mcp_neon_run_sql({
     params: {
+      projectId: process.env.NEON_PROJECT_ID!,
+      databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
       sql: `
-        INSERT INTO youtube (
-          title, 
-          youtube_url, 
-          url_storage, 
-          category_id,
+        INSERT INTO videos (
+          id,
+          titulo,
+          youtube_url,
+          url_video,
+          categoria_id,
           asset_id,
-          playback_id
+          playback_id,
+          origem,
+          status,
+          visibilidade,
+          slug,
+          criado_em,
+          atualizado_em
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES (
+          gen_random_uuid(),
+          $1,
+          $2,
+          $3,
+          $4,
+          $5,
+          $6,
+          'youtube',
+          'publicado',
+          'publico',
+          $7,
+          $8,
+          $8
+        )
         RETURNING id
       `,
       values: [
@@ -163,7 +191,9 @@ async function saveToDatabase(data: {
         data.url_storage,
         data.category_id,
         data.asset_id,
-        data.playback_id
+        data.playback_id,
+        slug,
+        now
       ]
     }
   });
@@ -172,6 +202,8 @@ async function saveToDatabase(data: {
   if (!result) {
     throw new Error('Falha ao salvar o vídeo no banco de dados');
   }
+
+  console.log('✅ Salvo no banco de dados');
 }
 
 async function downloadYouTubeVideo(url: string, categoryId: string) {

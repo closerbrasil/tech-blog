@@ -46,6 +46,7 @@ interface VideoData {
     nome: string
     cor: string
   }
+  playback_id: string
 }
 
 interface RelatedVideo {
@@ -63,7 +64,7 @@ export async function generateStaticParams() {
       sql: `
         SELECT slug 
         FROM videos 
-        WHERE status = 'POSTED' AND visibilidade = 'PUBLICO'
+        WHERE status = 'publicado' AND visibilidade = 'PUBLIC'
       `
     }
   });
@@ -122,8 +123,8 @@ export default async function VideoPage({ params }: VideoPageProps) {
         LEFT JOIN autores a ON v.autor_id = a.id
         LEFT JOIN categorias c ON v.categoria_id = c.id
         WHERE v.slug = $1 
-          AND v.status = 'POSTED' 
-          AND v.visibilidade = 'PUBLICO'
+          AND v.status = 'publicado' 
+          AND v.visibilidade = 'PUBLIC'
       `,
       values: [resolvedParams.slug]
     }
@@ -161,8 +162,8 @@ export default async function VideoPage({ params }: VideoPageProps) {
           id, slug, titulo, meta_descricao, 
           thumbnail_url, visualizacoes
         FROM videos 
-        WHERE status = 'POSTED' 
-          AND visibilidade = 'PUBLICO'
+        WHERE status = 'publicado' 
+          AND visibilidade = 'PUBLIC'
           AND id != $1
         ORDER BY visualizacoes DESC
         LIMIT 8
@@ -181,8 +182,8 @@ export default async function VideoPage({ params }: VideoPageProps) {
           id, slug, titulo, meta_descricao, 
           thumbnail_url, visualizacoes
         FROM videos 
-        WHERE status = 'POSTED' 
-          AND visibilidade = 'PUBLICO'
+        WHERE status = 'publicado' 
+          AND visibilidade = 'PUBLIC'
           AND id != $1
         ORDER BY publicado_em DESC
         LIMIT 8
@@ -229,15 +230,15 @@ export default async function VideoPage({ params }: VideoPageProps) {
           <article>
             <h1 className="text-xl md:text-2xl font-bold mb-4">{video.titulo}</h1>
 
-            {video.video_id ? (
+            {video.playback_id ? (
               <div className="mb-6">
                 <VideoPlayer 
-                  videoId={video.video_id} 
+                  videoId={video.playback_id} 
                   title={video.titulo}
-                  poster={video.thumbnail}
+                  poster={`https://image.mux.com/${video.playback_id}/thumbnail.jpg`}
                 />
                 <div className="mt-2 text-xs text-gray-500">
-                  Player ID: {video.video_id}
+                  Player ID: {video.playback_id}
                 </div>
               </div>
             ) : (
