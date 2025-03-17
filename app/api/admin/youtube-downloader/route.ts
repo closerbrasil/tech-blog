@@ -178,7 +178,7 @@ async function saveToDatabase(data: {
           $6,
           'youtube',
           'publicado',
-          'publico',
+          'PUBLIC',
           $7,
           $8,
           $8

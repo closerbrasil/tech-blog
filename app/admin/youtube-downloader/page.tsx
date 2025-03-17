@@ -78,7 +78,6 @@ export default function YouTubeDownloader() {
         description: 'Vídeo processado com sucesso.',
       });
 
-      // Limpa o formulário
       setUrl('');
       setCategoryId('');
     } catch (error) {
@@ -93,18 +92,22 @@ export default function YouTubeDownloader() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Download de Vídeos do YouTube</CardTitle>
-          <CardDescription>
+    <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 space-y-6">
+      <Card className="shadow-lg">
+        <CardHeader className="space-y-2 md:space-y-3">
+          <CardTitle className="text-2xl md:text-3xl font-bold">
+            Download de Vídeos do YouTube
+          </CardTitle>
+          <CardDescription className="text-base md:text-lg">
             Faça o download de vídeos do YouTube com áudio em português
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="url">URL do Vídeo</Label>
+              <Label htmlFor="url" className="text-base font-medium">
+                URL do Vídeo
+              </Label>
               <Input
                 id="url"
                 type="url"
@@ -112,22 +115,29 @@ export default function YouTubeDownloader() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 disabled={isLoading}
+                className="h-12 text-base"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Categoria</Label>
+              <Label htmlFor="category" className="text-base font-medium">
+                Categoria
+              </Label>
               <Select
                 value={categoryId}
                 onValueChange={setCategoryId}
                 disabled={isLoading}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base">
                   <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
+                    <SelectItem 
+                      key={category.id} 
+                      value={category.id}
+                      className="text-base"
+                    >
                       {category.name}
                     </SelectItem>
                   ))}
@@ -135,7 +145,11 @@ export default function YouTubeDownloader() {
               </Select>
             </div>
 
-            <Button type="submit" disabled={isLoading}>
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full h-12 text-base font-medium"
+            >
               {isLoading ? 'Processando...' : 'Baixar Vídeo'}
             </Button>
           </form>

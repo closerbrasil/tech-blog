@@ -48,7 +48,7 @@ async function getVideos() {
           LEFT JOIN autores a ON v.autor_id = a.id
           LEFT JOIN categorias c ON v.categoria_id = c.id
           WHERE v.status = 'publicado' 
-            AND v.visibilidade = 'publico'
+            AND v.visibilidade = 'PUBLIC'
             AND v.playback_id IS NOT NULL
           ORDER BY v.publicado_em DESC NULLS LAST, v.criado_em DESC
         `,
