@@ -21,6 +21,7 @@ import {
   DownloadIcon,
   LinkIcon,
   LockIcon,
+  BookIcon,
 } from "lucide-react";
 import AdBanner from "@/components/ads/ad-banner";
 import Newsletter from "@/components/newsletter";
@@ -30,7 +31,7 @@ import Markdown from 'react-markdown';
 interface Author {
   name: string;
   avatar: string;
-  bio: string;
+  bio?: string;
 }
 
 interface Resource {
@@ -43,46 +44,58 @@ interface Article {
   id: number;
   title: string;
   description: string;
+  content?: string;
   image: string;
   category: string;
   isPremium: boolean;
   readTime: string;
   date: string;
   author: Author;
-  content: string;
-  tags: string[];
   comments: number;
   slug: string;
-  resources: Resource[];
-  relatedArticles: number[];
+  tags?: string[];
+  resources?: Resource[];
+  relatedArticles?: number[];
 }
 
 // Mock data for related articles
-const relatedArticlesData = [
+const relatedArticles: Article[] = [
   {
     id: 2,
     title: "Building Scalable Microservices with Go and Kubernetes",
-    image: "https://images.unsplash.com/photo-1642059893618-eee386500798?q=80&w=2069&auto=format&fit=crop",
-    readTime: "15 min",
+    description: "A comprehensive tutorial on designing, implementing, and deploying microservices using Golang and Kubernetes.",
+    image: "https://placehold.co/800x400/1a1a1a/ffffff?text=Go+and+Kubernetes",
     category: "DevOps",
+    isPremium: false,
+    readTime: "15 min",
+    date: "May 10, 2025",
+    author: {
+      name: "Alex Morgan",
+      avatar: "https://placehold.co/100/1a1a1a/ffffff?text=AM",
+    },
+    comments: 18,
     slug: "building-scalable-microservices-go-kubernetes",
+    tags: ["Go", "Kubernetes", "Microservices", "DevOps"],
+    resources: [],
   },
   {
-    id: 4,
-    title: "Advanced TypeScript Patterns for Robust Enterprise Applications",
-    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=2070&auto=format&fit=crop",
-    readTime: "8 min",
-    category: "TypeScript",
-    slug: "advanced-typescript-patterns-enterprise-applications",
-  },
-  {
-    id: 5,
-    title: "Understanding WebAssembly: The Future of Web Performance",
-    image: "https://images.unsplash.com/photo-1635954780549-bbc97603d7a5?q=80&w=1972&auto=format&fit=crop",
-    readTime: "14 min",
-    category: "Web",
-    slug: "understanding-webassembly-future-web-performance",
-  },
+    id: 3,
+    title: "Machine Learning for Frontend Developers: Practical Applications",
+    description: "Discover how frontend developers can use machine learning to enhance user interfaces and create personalized experiences.",
+    image: "https://placehold.co/800x400/1a1a1a/ffffff?text=Machine+Learning",
+    category: "AI/ML",
+    isPremium: true,
+    readTime: "10 min",
+    date: "May 5, 2025",
+    author: {
+      name: "Sarah Chen",
+      avatar: "https://placehold.co/100/1a1a1a/ffffff?text=SC",
+    },
+    comments: 31,
+    slug: "machine-learning-frontend-developers-applications",
+    tags: ["Machine Learning", "Frontend", "AI"],
+    resources: [],
+  }
 ];
 
 export default function ArticleDetail({ article }: { article: Article }) {
@@ -121,14 +134,17 @@ export default function ArticleDetail({ article }: { article: Article }) {
   };
 
   // Find related articles based on the IDs
-  const relatedArticles = article.relatedArticles
-    .map(id => relatedArticlesData.find(article => article.id === id))
-    .filter(Boolean);
+  const findRelatedArticles = (article: Article): Article[] => {
+    return article.relatedArticles
+      ? article.relatedArticles.map(id => relatedArticles.find(article => article.id === id))
+      .filter((article): article is Article => article !== undefined)
+      : [];
+  };
 
   // Icon map for resource types
-  const resourceIcons = {
+  const resourceIcons: Record<Resource["type"], React.ReactNode> = {
     github: <GithubIcon className="h-4 w-4" />,
-    documentation: <FileTextIcon className="h-4 w-4" />,
+    documentation: <BookIcon className="h-4 w-4" />,
     download: <DownloadIcon className="h-4 w-4" />,
     related: <LinkIcon className="h-4 w-4" />,
   };
@@ -241,7 +257,7 @@ export default function ArticleDetail({ article }: { article: Article }) {
           <div className="mb-8">
             <h3 className="text-lg font-semibold mb-3">Topics</h3>
             <div className="flex flex-wrap gap-2">
-              {article.tags.map((tag) => (
+              {article.tags?.map((tag) => (
                 <Badge key={tag} variant="secondary" className="cursor-pointer hover:bg-secondary/80">
                   {tag}
                 </Badge>
@@ -295,26 +311,26 @@ export default function ArticleDetail({ article }: { article: Article }) {
           <div className="mb-10">
             <h3 className="text-xl font-semibold mb-4">Related Articles</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {relatedArticles.map((article) => (
-                <Card key={article?.id} className="overflow-hidden hover:border-primary transition-colors">
+              {findRelatedArticles(article).map((article) => (
+                <Card key={article.id} className="overflow-hidden hover:border-primary transition-colors">
                   <div className="aspect-video w-full overflow-hidden">
                     <img
-                      src={article?.image}
-                      alt={article?.title}
+                      src={article.image}
+                      alt={article.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <CardHeader className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <Badge variant="outline">{article?.category}</Badge>
+                      <Badge variant="outline">{article.category}</Badge>
                       <div className="flex items-center text-xs text-muted-foreground">
                         <ClockIcon className="mr-1 h-3 w-3" />
-                        <span>{article?.readTime}</span>
+                        <span>{article.readTime}</span>
                       </div>
                     </div>
                     <CardTitle className="text-base">
-                      <Link href={`/articles/${article?.slug}`} className="hover:text-primary transition-colors">
-                        {article?.title}
+                      <Link href={`/articles/${article.slug}`} className="hover:text-primary transition-colors">
+                        {article.title}
                       </Link>
                     </CardTitle>
                   </CardHeader>
@@ -322,6 +338,29 @@ export default function ArticleDetail({ article }: { article: Article }) {
               ))}
             </div>
           </div>
+          
+          {article.resources && article.resources.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold mb-3">Resources</h3>
+              <ScrollArea className="h-auto max-h-[300px]">
+                <div className="space-y-4">
+                  {article.resources.map((resource, index) => (
+                    <div key={index}>
+                      <a 
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center space-x-2 text-sm hover:text-primary transition-colors"
+                      >
+                        {resourceIcons[resource.type]}
+                        <span>{resource.title}</span>
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
+          )}
         </div>
         
         {/* Sidebar */}
@@ -335,7 +374,7 @@ export default function ArticleDetail({ article }: { article: Article }) {
             <CardContent>
               <ScrollArea className="h-auto max-h-[300px]">
                 <div className="space-y-4">
-                  {article.resources.map((resource, index) => (
+                  {article.resources?.map((resource, index) => (
                     <div key={index}>
                       <a 
                         href={resource.url} 

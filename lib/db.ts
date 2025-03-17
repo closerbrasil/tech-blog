@@ -12,16 +12,31 @@ export interface VideoRow {
   plataforma: string;
   titulo: string;
   descricao: string;
-  thumbnail: string;
-  url: string;
+  thumbnail_url: string;
+  embed_url: string;
   duracao: number;
   autor_id: string;
   categoria_id: string;
-  views: number;
-  likes: number;
+  visualizacoes: number;
+  curtidas: number;
   publicado: boolean;
-  status?: string;
+  status: 'PUBLIC' | 'PRIVATE';
   publicado_em?: Date;
+  meta_descricao: string;
+  conteudo: string;
+  recursos: string;
+  capitulos: string;
+  autores?: {
+    id: string;
+    nome: string;
+    avatar_url: string;
+    cargo: string;
+  };
+  categorias?: {
+    id: string;
+    nome: string;
+    cor: string;
+  };
 }
 
 // Interface para opções de consulta
@@ -57,7 +72,7 @@ export const db = {
           v.*
         FROM videos v
         ${options?.include?.autores ? 'LEFT JOIN autores a ON v.autor_id = a.id' : ''}
-        ${options?.include?.categorias ? 'LEFT JOIN categorias c ON v.categoria_id = c.id' : ''}
+        ${options?.include?.categorias ? 'LEFT JOIN videos_categorias vc ON v.id = vc.video_id LEFT JOIN categorias c ON vc.categoria_id = c.id' : ''}
       `;
 
       if (options?.where) {
@@ -105,7 +120,7 @@ export const db = {
           v.*
         FROM videos v
         ${options?.include?.autores ? 'LEFT JOIN autores a ON v.autor_id = a.id' : ''}
-        ${options?.include?.categorias ? 'LEFT JOIN categorias c ON v.categoria_id = c.id' : ''}
+        ${options?.include?.categorias ? 'LEFT JOIN videos_categorias vc ON v.id = vc.video_id LEFT JOIN categorias c ON vc.categoria_id = c.id' : ''}
       `;
 
       const conditions = Object.entries(options.where).map(([key, value]) => {
@@ -132,7 +147,8 @@ export const db = {
         video.autores = {
           id: video.autor_id,
           nome: video.autor_nome || '',
-          avatar_url: video.autor_avatar_url || ''
+          avatar_url: video.autor_avatar_url || '',
+          cargo: video.autor_cargo || ''
         };
       }
 

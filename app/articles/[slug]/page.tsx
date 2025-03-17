@@ -6,15 +6,15 @@ const articles = [
   {
     id: 1,
     title: "The Complete Guide to React Server Components in 2025",
-    description: "Aprenda como aproveitar o React Server Components para criar aplicações web mais rápidas e eficientes com uma experiência de usuário aprimorada.",
-    image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop",
+    description: "Learn how to leverage React Server Components to build faster, more efficient web applications with improved user experience.",
+    image: "https://placehold.co/800x400/1a1a1a/ffffff?text=React+Server+Components",
     category: "React",
     isPremium: true,
     readTime: "12 min",
     date: "May 15, 2025",
     author: {
       name: "Jane Cooper",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      avatar: "https://placehold.co/100/1a1a1a/ffffff?text=JC",
       bio: "Senior Frontend Engineer at TechCorp. React enthusiast and open source contributor.",
     },
     content: `

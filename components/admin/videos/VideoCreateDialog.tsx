@@ -48,11 +48,10 @@ export function VideoCreateDialog({ isOpen, onClose }: VideoCreateDialogProps) {
     descricao: "",
     categoria_id: "",
     autor_id: "",
-    visibilidade: "PUBLICO",
+    status: "PRIVATE",
     conteudo: "",
     meta_descricao: "",
     slug: "",
-    status: "POSTED",
     recursos: "[]",
     capitulos: "[]",
     plataforma: "mux"
@@ -312,21 +311,22 @@ export function VideoCreateDialog({ isOpen, onClose }: VideoCreateDialogProps) {
                     </Select>
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label htmlFor="visibilidade">Visibilidade</Label>
-                    <Select
-                      value={form.visibilidade}
-                      onValueChange={(value) => handleInputChange("visibilidade", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione a visibilidade" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PUBLICO">Público</SelectItem>
-                        <SelectItem value="PRIVADO">Privado</SelectItem>
-                        <SelectItem value="ASSINANTES">Assinantes</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="status">Status</Label>
+                    <div className="col-span-3">
+                      <Select
+                        value={form.status}
+                        onValueChange={(value) => handleInputChange("status", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PRIVATE">Privado</SelectItem>
+                          <SelectItem value="PUBLIC">Público</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>

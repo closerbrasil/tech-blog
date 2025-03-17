@@ -44,20 +44,25 @@ import { VideoCreateDialog } from "@/components/admin/videos/VideoCreateDialog";
 import type { VideoType, Categoria, Autor } from "./types";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Schema de validação
-const videoFormSchema = z.object({
-  titulo: z.string().min(3, "O título deve ter no mínimo 3 caracteres"),
-  descricao: z.string().min(10, "A descrição deve ter no mínimo 10 caracteres"),
-  video_id: z.string().optional(),
-  thumbnail_url: z.string().url("URL inválida").optional(),
-  duracao: z.number().min(1, "A duração deve ser maior que 0").optional(),
-  visibilidade: z.enum(["PUBLICO", "PRIVADO", "ASSINANTES"]),
-  categoria_id: z.string().min(1, "Selecione uma categoria"),
-  autor_id: z.string().min(1, "Selecione um autor"),
+const formSchema = z.object({
+  titulo: z.string().min(1, "O título é obrigatório"),
+  descricao: z.string().min(1, "A descrição é obrigatória"),
+  transcricao: z.string().optional(),
+  youtube_url: z.string().url("URL inválida").optional(),
+  url_video: z.string().url("URL inválida").optional(),
+  asset_id: z.string().optional(),
+  playback_id: z.string().optional(),
+  track_id: z.string().optional(),
+  origem: z.string().optional(),
+  status: z.enum(["PUBLIC", "PRIVATE"]),
+  slug: z.string().optional(),
+  thumbnail_url: z.string().url("URL inválida").optional()
 });
 
-type VideoFormValues = z.infer<typeof videoFormSchema>;
+type VideoFormValues = z.infer<typeof formSchema>;
 
 // Componente para o formulário de vídeo
 function VideoForm({
@@ -73,28 +78,96 @@ function VideoForm({
   categorias?: Categoria[];
   autores?: Autor[];
 }) {
-  const isValidVisibilidade = (value: string | undefined): value is "PUBLICO" | "PRIVADO" | "ASSINANTES" => {
-    return value ? ["PUBLICO", "PRIVADO", "ASSINANTES"].includes(value) : false;
-  };
-
   const form = useForm<VideoFormValues>({
-    resolver: zodResolver(videoFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: {
       titulo: video?.titulo || "",
       descricao: video?.descricao || "",
-      video_id: video?.video_id || "",
-      thumbnail_url: video?.thumbnail_url || "",
-      duracao: video?.duracao || 0,
-      visibilidade: isValidVisibilidade(video?.visibilidade) ? video.visibilidade : "PUBLICO",
-      categoria_id: video?.categoria_id || "",
-      autor_id: video?.autor_id || "",
+      transcricao: video?.transcricao || "",
+      youtube_url: video?.youtube_url || "",
+      url_video: video?.url_video || "",
+      asset_id: video?.asset_id || "",
+      playback_id: video?.playback_id || "",
+      track_id: video?.track_id || "",
+      origem: video?.origem || "",
+      status: video?.status || "PRIVATE",
+      slug: video?.slug || "",
+      thumbnail_url: video?.thumbnail_url || ""
     }
   });
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* Formulário existente */}
+        <FormField
+          control={form.control}
+          name="titulo"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Título</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="descricao"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Descrição</FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
+              <FormControl>
+                <select
+                  {...field}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                >
+                  <option value="PRIVATE">Privado</option>
+                  <option value="PUBLIC">Público</option>
+                </select>
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="thumbnail_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL da Thumbnail</FormLabel>
+              <FormControl>
+                <Input {...field} type="url" />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <div className="flex justify-end gap-4">
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              Cancelar
+            </Button>
+          </DialogClose>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Salvar
+          </Button>
+        </div>
       </form>
     </Form>
   );
@@ -160,7 +233,7 @@ export function VideoManager() {
   });
 
   const handleDelete = () => {
-    if (selectedVideo) {
+    if (selectedVideo && selectedVideo.id) {
       deleteMutation.mutate(selectedVideo.id);
     }
   };
@@ -215,7 +288,7 @@ export function VideoManager() {
                 <TableHead className="font-semibold">Título</TableHead>
                 <TableHead className="font-semibold">Categoria</TableHead>
                 <TableHead className="font-semibold">Autor</TableHead>
-                <TableHead className="font-semibold">Visibilidade</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="text-right font-semibold">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -232,11 +305,11 @@ export function VideoManager() {
                 >
                   <TableCell className="font-medium text-foreground/90">{video.id}</TableCell>
                   <TableCell className="text-foreground/90">{video.titulo}</TableCell>
-                  <TableCell className="text-foreground/90">{video.categoria_nome}</TableCell>
-                  <TableCell className="text-foreground/90">{video.autor_nome}</TableCell>
+                  <TableCell className="text-foreground/90">{video.categorias?.nome}</TableCell>
+                  <TableCell className="text-foreground/90">{video.autores?.nome}</TableCell>
                   <TableCell>
-                    <Badge variant={video.visibilidade === "PUBLICO" ? "default" : "secondary"}>
-                      {video.visibilidade}
+                    <Badge variant={video.status === "PUBLIC" ? "default" : "secondary"}>
+                      {video.status === "PUBLIC" ? "Público" : "Privado"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -276,7 +349,7 @@ export function VideoManager() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-xl font-semibold">Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground/90">
-              Você tem certeza que deseja excluir o vídeo "{selectedVideo?.titulo}"? 
+              Você tem certeza que deseja excluir o vídeo &quot;{selectedVideo?.titulo}&quot;? 
               Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

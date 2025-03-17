@@ -13,7 +13,7 @@ O sistema implementa um gerenciador de conexões que utiliza o padrão Singleton
 - **Conexões eficientes**: Reutilização de conexões para reduzir overhead
 - **Reconexão automática**: Em caso de falha de conexão
 - **Gerenciamento de pool**: Limites configuráveis de conexões simultâneas
-- **Abstração de consultas**: Interface similar ao Prisma para operações CRUD
+- **Abstração de consultas**: Interface otimizada para operações CRUD com Neon PostgreSQL
 
 ### Modelos de Dados
 
@@ -49,27 +49,29 @@ Para configurar o ambiente de desenvolvimento:
 
 ### Como Funciona
 
-O MCP implementa uma interface similar ao Prisma, mas otimizada para o Neon PostgreSQL:
+O MCP implementa uma interface otimizada para o Neon PostgreSQL:
 
 ```typescript
-// Exemplo de uso do MCP
-import { prisma } from '@/lib/db';
+import { db } from '@/lib/db';
 
-// Buscar dados
-const videos = await prisma.videos.findMany({
+// Buscar vídeos
+const videos = await db.video.findMany({
+  where: {
+    status: 'PUBLIC'
+  },
   include: {
     autores: true,
-    categorias: true,
-  },
+    categorias: true
+  }
 });
 
-// Criar registros
-const novoVideo = await prisma.videos.create({
+// Criar novo vídeo
+const novoVideo = await db.video.create({
   data: {
-    titulo: 'Novo vídeo',
+    titulo: 'Título do vídeo',
     descricao: 'Descrição do vídeo',
-    // outros campos
-  },
+    status: 'PUBLIC'
+  }
 });
 ```
 

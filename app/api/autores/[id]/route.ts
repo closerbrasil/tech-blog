@@ -1,14 +1,17 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { mcp_neon_run_sql } from '@/lib/db';
 import { insertAutorSchema } from '@/shared/schema';
 
-interface RouteParams {
+type RouteContext = {
   params: {
     id: string;
   };
-}
+};
 
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
     const result = await mcp_neon_run_sql({
       params: {
@@ -16,7 +19,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           SELECT * FROM autores 
-          WHERE id = '${params.id}'
+          WHERE id = '${context.params.id}'
         `
       }
     });
@@ -37,7 +40,10 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
     const data = await request.json();
     const validatedData = insertAutorSchema.partial().parse(data);
@@ -57,7 +63,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         sql: `
           UPDATE autores 
           SET ${setClause}, atualizado_em = NOW()
-          WHERE id = '${params.id}'
+          WHERE id = '${context.params.id}'
           RETURNING *
         `
       }
@@ -79,7 +85,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  context: RouteContext
+) {
   try {
     const result = await mcp_neon_run_sql({
       params: {
@@ -87,7 +96,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           DELETE FROM autores 
-          WHERE id = '${params.id}'
+          WHERE id = '${context.params.id}'
           RETURNING id
         `
       }

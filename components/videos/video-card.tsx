@@ -48,11 +48,9 @@ export function VideoCard({
               </svg>
             </div>
           </div>
-          
-          <div className="absolute bottom-4 left-4 right-4">
-            <h3 className="text-lg font-semibold text-white truncate">{titulo}</h3>
-          </div>
         </div>
+
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">{titulo}</h3>
         
         {meta_descricao && (
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{meta_descricao}</p>

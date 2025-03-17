@@ -12,7 +12,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   NavigationMenu,
   NavigationMenuContent,
@@ -32,7 +31,7 @@ import {
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { setTheme, theme } = useTheme();
+  const { setTheme } = useTheme();
 
   return (
     <nav className="border-b bg-background sticky top-0 z-50">

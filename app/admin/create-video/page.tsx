@@ -42,8 +42,7 @@ const videoSchema = z.object({
   duracao: z.number().min(0).default(0),
   autor_id: z.string().uuid("Selecione um autor válido"),
   categoria_id: z.string().uuid("Selecione uma categoria válida"),
-  status: z.enum(["POSTED", "NOT_POSTED"]).default("NOT_POSTED"),
-  visibilidade: z.enum(["PUBLICO", "PRIVADO", "ASSINANTES"]).default("PUBLICO"),
+  status: z.enum(["PUBLIC", "PRIVATE"]).default("PRIVATE"),
 });
 
 type FormValues = z.infer<typeof videoSchema>;
@@ -82,8 +81,7 @@ export default function CreateVideoPage() {
       conteudo: "",
       video_id: "",
       plataforma: "mux",
-      status: "NOT_POSTED",
-      visibilidade: "PUBLICO",
+      status: "PRIVATE",
       duracao: 0,
     },
   });
@@ -103,8 +101,7 @@ export default function CreateVideoPage() {
         duracao: video.duracao || 0,
         autor_id: video.autor_id || undefined,
         categoria_id: video.categoria_id || undefined,
-        status: video.status as "POSTED" | "NOT_POSTED",
-        visibilidade: video.visibilidade as "PUBLICO" | "PRIVADO" | "ASSINANTES",
+        status: video.status as "PUBLIC" | "PRIVATE",
       });
     }
   }, [video, form]);
@@ -321,31 +318,8 @@ export default function CreateVideoPage() {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="NOT_POSTED">Não Publicado</SelectItem>
-                    <SelectItem value="POSTED">Publicado</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="visibilidade"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Visibilidade</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="PUBLICO">Público</SelectItem>
-                    <SelectItem value="PRIVADO">Privado</SelectItem>
-                    <SelectItem value="ASSINANTES">Assinantes</SelectItem>
+                    <SelectItem value="PUBLIC">Público</SelectItem>
+                    <SelectItem value="PRIVATE">Privado</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />

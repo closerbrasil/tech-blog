@@ -6,6 +6,7 @@ import Newsletter from '@/components/newsletter'
 import { RelatedVideos } from '@/components/videos/RelatedVideos'
 import VideoPlayer from '@/components/videos/VideoPlayer'
 import { mcp_neon_run_sql } from '@/lib/db'
+import { Eye, ThumbsUp } from 'lucide-react'
 
 interface VideoPageProps {
   params: Promise<{
@@ -14,48 +15,45 @@ interface VideoPageProps {
 }
 
 interface VideoData {
-  id: string
-  video_id: string
-  plataforma: string
-  titulo: string
-  thumbnail: string
-  embed_url: string | null
-  duracao: number | null
-  views: number | null
-  likes: number | null
-  slug: string
-  autor_id: string | null
-  categoria_id: string | null
-  publicado_em: Date
-  atualizado_em: Date
-  status: string
-  visibilidade: string
-  conteudo: string
-  meta_descricao: string
-  transcricao_url: string | null
-  transcricao_original_filename: string | null
-  recursos: string
-  capitulos: string
+  id: string;
+  titulo: string;
+  descricao: string;
+  transcricao: string;
+  youtube_url: string;
+  url_video: string;
+  asset_id: string;
+  playback_id: string;
+  track_id: string;
+  origem: string;
+  status: 'PUBLIC' | 'PRIVATE';
+  slug: string;
+  thumbnail_url: string;
+  criado_em: string;
+  atualizado_em: string;
+  visualizacoes: number;
+  curtidas: number;
+  recursos: string;
+  conteudo: string;
+  publicado_em: string;
   autores?: {
-    id: string
-    nome: string
-    avatar_url: string
-  }
+    id: string;
+    nome: string;
+    avatar_url: string;
+  };
   categorias?: {
-    id: string
-    nome: string
-    cor: string
-  }
-  playback_id: string
+    id: string;
+    nome: string;
+    cor: string;
+  };
 }
 
 interface RelatedVideo {
-  id: string
-  slug: string
-  title: string
-  description: string
-  views: number
-  thumbnail: string
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  views: number;
+  thumbnail: string;
 }
 
 export async function generateStaticParams() {
@@ -64,7 +62,7 @@ export async function generateStaticParams() {
       sql: `
         SELECT slug 
         FROM videos 
-        WHERE status = 'publicado' AND visibilidade = 'PUBLIC'
+        WHERE status = 'PUBLIC'
       `
     }
   });
@@ -97,11 +95,19 @@ export async function generateMetadata({ params }: VideoPageProps): Promise<Meta
     }
   }
 
-  return {
-    title: `${video.titulo} | Tech Blog`,
-    description: video.meta_descricao,
-    authors: video.autor_nome ? [{ name: video.autor_nome }] : undefined,
-  }
+  const metadata: Metadata = {
+    title: video.titulo,
+    description: video.descricao,
+    openGraph: {
+      title: video.titulo,
+      description: video.descricao,
+      images: [video.thumbnail_url],
+      type: 'video.other',
+      videos: [video.url_video]
+    }
+  };
+
+  return metadata;
 }
 
 export default async function VideoPage({ params }: VideoPageProps) {
@@ -111,20 +117,10 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const result = await mcp_neon_run_sql({
     params: {
       sql: `
-        SELECT 
-          v.*,
-          a.id as autor_id,
-          a.nome as autor_nome,
-          a.avatar_url as autor_avatar_url,
-          c.id as categoria_id,
-          c.nome as categoria_nome,
-          c.cor as categoria_cor
+        SELECT *
         FROM videos v
-        LEFT JOIN autores a ON v.autor_id = a.id
-        LEFT JOIN categorias c ON v.categoria_id = c.id
-        WHERE v.slug = $1 
-          AND v.status = 'publicado' 
-          AND v.visibilidade = 'PUBLIC'
+        WHERE status = 'PUBLIC'
+        AND slug = $1
       `,
       values: [resolvedParams.slug]
     }
@@ -138,10 +134,26 @@ export default async function VideoPage({ params }: VideoPageProps) {
 
   // Transformar o resultado em VideoData
   const video: VideoData = {
-    ...videoRow,
-    thumbnail: videoRow.thumbnail_url || '',
-    views: videoRow.visualizacoes,
-    likes: videoRow.curtidas,
+    id: videoRow.id,
+    titulo: videoRow.titulo,
+    descricao: videoRow.descricao,
+    transcricao: videoRow.transcricao,
+    youtube_url: videoRow.youtube_url,
+    url_video: videoRow.url_video,
+    asset_id: videoRow.asset_id,
+    playback_id: videoRow.playback_id,
+    track_id: videoRow.track_id,
+    origem: videoRow.origem,
+    status: videoRow.status,
+    slug: videoRow.slug,
+    thumbnail_url: videoRow.thumbnail_url || '',
+    criado_em: videoRow.criado_em,
+    atualizado_em: videoRow.atualizado_em,
+    visualizacoes: videoRow.visualizacoes || 0,
+    curtidas: videoRow.curtidas || 0,
+    recursos: videoRow.recursos || '[]',
+    conteudo: videoRow.conteudo || '',
+    publicado_em: videoRow.publicado_em,
     autores: videoRow.autor_id ? {
       id: videoRow.autor_id,
       nome: videoRow.autor_nome,
@@ -155,38 +167,31 @@ export default async function VideoPage({ params }: VideoPageProps) {
   };
 
   // Buscar vídeos relacionados
-  const relatedResult = await mcp_neon_run_sql({
+  const relatedVideos = await mcp_neon_run_sql({
     params: {
       sql: `
-        SELECT 
-          id, slug, titulo, meta_descricao, 
-          thumbnail_url, visualizacoes
-        FROM videos 
-        WHERE status = 'publicado' 
-          AND visibilidade = 'PUBLIC'
-          AND id != $1
-        ORDER BY visualizacoes DESC
-        LIMIT 8
+        SELECT v.*
+        FROM videos v
+        WHERE v.status = 'PUBLIC'
+        AND v.id != $1
+        LIMIT 3
       `,
       values: [video.id]
     }
   });
 
-  const videosRelacionados = relatedResult.rows;
+  const videosRelacionados = relatedVideos.rows;
 
   // Se não encontrar vídeos da mesma categoria, busca os mais recentes
   const fallbackResult = videosRelacionados.length === 0 ? await mcp_neon_run_sql({
     params: {
       sql: `
-        SELECT 
-          id, slug, titulo, meta_descricao, 
-          thumbnail_url, visualizacoes
-        FROM videos 
-        WHERE status = 'publicado' 
-          AND visibilidade = 'PUBLIC'
-          AND id != $1
-        ORDER BY publicado_em DESC
-        LIMIT 8
+        SELECT *
+        FROM videos
+        WHERE id > $1
+        AND status = 'PUBLIC'
+        ORDER BY id ASC
+        LIMIT 1
       `,
       values: [video.id]
     }
@@ -207,16 +212,44 @@ export default async function VideoPage({ params }: VideoPageProps) {
   const debugApiUrl = `/api/debug/video?slug=${video.slug}`;
 
   // Formatar vídeos relacionados
-  const relatedVideos: RelatedVideo[] = videosToShow
-    .filter((video) => video.thumbnail_url !== null)
-    .map((video) => ({
+  const relatedVideosFormatted: RelatedVideo[] = videosToShow
+    .filter((video: any) => video.thumbnail_url !== null)
+    .map((video: any) => ({
       id: video.id,
       slug: video.slug,
       title: video.titulo,
-      description: video.meta_descricao || '',
-      views: video.visualizacoes || 0,
-      thumbnail: video.thumbnail_url || ''
+      description: video.meta_descricao,
+      views: video.visualizacoes,
+      thumbnail: video.thumbnail_url
     }));
+
+  const nextVideo = await mcp_neon_run_sql({
+    params: {
+      sql: `
+        SELECT *
+        FROM videos
+        WHERE id > $1
+        AND status = 'PUBLIC'
+        ORDER BY id ASC
+        LIMIT 1
+      `,
+      values: [video.id]
+    }
+  });
+
+  const previousVideo = await mcp_neon_run_sql({
+    params: {
+      sql: `
+        SELECT *
+        FROM videos
+        WHERE id < $1
+        AND status = 'PUBLIC'
+        ORDER BY id DESC
+        LIMIT 1
+      `,
+      values: [video.id]
+    }
+  });
 
   return (
     <div className="max-w-[1100px] mx-auto px-4 py-8">
@@ -268,9 +301,15 @@ export default async function VideoPage({ params }: VideoPageProps) {
                 )}
               </div>
 
-              <div className="flex items-center space-x-4 text-gray-600 dark:text-gray-400">
-                <span>{video.views || 0} visualizações</span>
-                <span>{video.likes || 0} curtidas</span>
+              <div className="flex items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center gap-1">
+                  <Eye className="h-4 w-4" />
+                  <span>{video.visualizacoes} visualizações</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <ThumbsUp className="h-4 w-4" />
+                  <span>{video.curtidas} curtidas</span>
+                </div>
               </div>
             </div>
 
@@ -312,7 +351,7 @@ export default async function VideoPage({ params }: VideoPageProps) {
         </div>
 
         <div className="lg:col-span-4">
-          <RelatedVideos videos={relatedVideos} />
+          <RelatedVideos videos={relatedVideosFormatted} />
           <Newsletter />
           <AdBanner position="sidebar" />
         </div>

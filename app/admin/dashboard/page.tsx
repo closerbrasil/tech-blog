@@ -163,8 +163,7 @@ export default function AdminDashboard() {
                     imageUrl: "/url/para/imagem-principal.jpg",
                     autorId: "id-do-autor",
                     categoriaId: "id-da-categoria",
-                    status: "publicado",
-                    visibilidade: "publico",
+                    status: "PRIVATE",
                     metaTitulo: "Título para SEO (opcional)",
                     metaDescricao: "Descrição para SEO (opcional)",
                     tempoLeitura: "5 min"

@@ -12,8 +12,7 @@ export const noticiaSchema = z.object({
   meta_descricao: z.string().optional(),
   palavra_chave: z.string().optional(),
   tempo_leitura: z.string().optional(),
-  status: z.enum(["DRAFT", "POSTED", "ARCHIVED"]),
-  visibilidade: z.enum(["PUBLICO", "PRIVADO"]),
+  status: z.enum(["PUBLIC", "PRIVATE"]),
   imagem_alt: z.string().optional(),
   schema_type: z.enum(["Article", "NewsArticle", "BlogPosting"])
 });
@@ -36,29 +35,59 @@ export const categoriaSchema = z.object({
   slug: z.string(),
   descricao: z.string().min(10, "A descrição precisa ter pelo menos 10 caracteres").optional(),
   image_url: z.string().url("URL da imagem inválida").optional(),
-  cor: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Cor hexadecimal inválida")
+  cor: z.string().regex(/^#([A-Fa-f0-9]{6})$/, "Cor hexadecimal inválida"),
+  parent_id: z.string().uuid("ID da categoria pai inválido").optional()
 });
 
 export const videoSchema = z.object({
-  video_id: z.string(),
-  plataforma: z.string(),
-  titulo: z.string().min(3, "O título precisa ter pelo menos 3 caracteres"),
-  thumbnail_url: z.string().url("URL da thumbnail inválida").optional(),
-  embed_url: z.string().url("URL do embed inválida").optional(),
-  duracao: z.number().optional(),
-  visualizacoes: z.number().optional(),
-  curtidas: z.number().optional(),
-  slug: z.string(),
-  autor_id: z.string().uuid("ID do autor inválido").optional(),
+  id: z.string().uuid().optional(),
+  titulo: z.string().min(1, "O título é obrigatório"),
+  slug: z.string().min(1, "O slug é obrigatório"),
+  descricao: z.string().optional(),
+  thumbnail_url: z.string().url("URL inválida").optional(),
+  url_video: z.string().url("URL inválida").optional(),
+  duracao: z.number().int().optional(),
+  visualizacoes: z.number().int().default(0),
+  curtidas: z.number().int().default(0),
   categoria_id: z.string().uuid("ID da categoria inválido").optional(),
-  status: z.enum(["DRAFT", "POSTED", "ARCHIVED"]),
-  visibilidade: z.enum(["PUBLICO", "PRIVADO"]),
-  conteudo: z.string(),
-  meta_descricao: z.string(),
-  transcricao_url: z.string().url("URL da transcrição inválida").optional(),
-  transcricao_original_filename: z.string().optional(),
-  recursos: z.string(),
-  capitulos: z.string()
+  origem: z.string().default("youtube"),
+  status: z.enum(["PUBLIC", "PRIVATE"]).default("PRIVATE"),
+  meta_descricao: z.string().optional(),
+  keywords: z.array(z.string()).optional(),
+  transcricao: z.string().optional(),
+  asset_id: z.string().optional(),
+  playback_id: z.string().optional(),
+  youtube_url: z.string().url("URL inválida").optional(),
+  conteudo: z.string().optional(),
+  publicado_em: z.string().optional(),
+  autor_id: z.string().uuid("ID do autor inválido").optional(),
+  capitulos: z.string().optional(),
+  track_id: z.string().optional(),
+  criado_em: z.string().optional(),
+  atualizado_em: z.string().optional()
+});
+
+export const videoInputSchema = z.object({
+  titulo: z.string().min(1, "O título é obrigatório"),
+  descricao: z.string().min(1, "A descrição é obrigatória"),
+  transcricao: z.string().optional(),
+  youtube_url: z.string().url("URL inválida"),
+  url_video: z.string().url("URL inválida"),
+  asset_id: z.string(),
+  playback_id: z.string(),
+  track_id: z.string(),
+  origem: z.string(),
+  status: z.enum(["PUBLIC", "PRIVATE"]),
+  slug: z.string(),
+  thumbnail_url: z.string().url("URL inválida")
+});
+
+export const tagSchema = z.object({
+  id: z.string().uuid(),
+  nome: z.string().min(1, "O nome é obrigatório"),
+  slug: z.string().min(1, "O slug é obrigatório"),
+  criado_em: z.string(),
+  atualizado_em: z.string(),
 });
 
 // Tipos inferidos dos schemas
@@ -78,11 +107,32 @@ export type Categoria = z.infer<typeof categoriaSchema> & {
   id: string;
   criado_em: string;
   atualizado_em: string;
+  level?: number;
+  path?: string[];
 };
 
-export type Video = z.infer<typeof videoSchema> & {
+export type VideoType = z.infer<typeof videoSchema>;
+
+export type Video = VideoType & {
   id: string;
-  publicado_em: string;
+  criado_em: string;
+  atualizado_em: string;
+  categoria?: {
+    id: string;
+    nome: string;
+    cor: string;
+  };
+  autor?: {
+    id: string;
+    nome: string;
+    avatar_url: string;
+    cargo: string;
+  };
+};
+
+export type Tag = z.infer<typeof tagSchema> & {
+  id: string;
+  criado_em: string;
   atualizado_em: string;
 };
 
@@ -91,9 +141,13 @@ export type InsertNoticia = z.infer<typeof noticiaSchema>;
 export type InsertAutor = z.infer<typeof autorSchema>;
 export type InsertCategoria = z.infer<typeof categoriaSchema>;
 export type InsertVideo = z.infer<typeof videoSchema>;
+export type InsertTag = z.infer<typeof tagSchema>;
 
 // Re-exportar os schemas para validação
 export const insertNoticiaSchema = noticiaSchema;
 export const insertAutorSchema = autorSchema;
 export const insertCategoriaSchema = categoriaSchema;
-export const insertVideoSchema = videoSchema; 
+export const insertVideoSchema = videoSchema;
+export const insertTagSchema = tagSchema;
+
+export type VideoSchema = z.infer<typeof videoSchema>; 

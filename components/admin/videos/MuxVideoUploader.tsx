@@ -22,6 +22,16 @@ interface MuxUploadResponse {
   playback_id?: string;
 }
 
+interface ProgressDetail {
+  progress: number;
+}
+
+type MuxProgressEvent = CustomEvent<number> | React.SyntheticEvent<HTMLElement>;
+
+interface UploadError {
+  message?: string;
+}
+
 export function MuxVideoUploader({ onUploadComplete }: VideoUploaderProps) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -110,9 +120,10 @@ export function MuxVideoUploader({ onUploadComplete }: VideoUploaderProps) {
     }
   };
 
-  const handleUploadError = (error: any) => {
+  const handleUploadError = (event: React.SyntheticEvent<HTMLElement>) => {
     setIsUploading(false);
     setUploadProgress(0);
+    const error = event as unknown as UploadError;
     const errorMessage = error?.message || "Ocorreu um erro ao fazer upload do vídeo";
     setError(errorMessage);
     toast({
@@ -174,8 +185,10 @@ export function MuxVideoUploader({ onUploadComplete }: VideoUploaderProps) {
         onUploadStart={handleUploadStart}
         onSuccess={handleUploadSuccess}
         onError={handleUploadError}
-        onProgress={(evt: any) => {
-          handleUploadProgress(evt.detail.progress);
+        onProgress={(event: MuxProgressEvent) => {
+          if (event instanceof CustomEvent) {
+            handleUploadProgress(event.detail);
+          }
         }}
         maxFileSize={2147483648} // 2GB em bytes
       >

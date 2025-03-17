@@ -1,3 +1,5 @@
+'use client';
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
 import { Bot, Loader2, Plus, Trash2, Search, CheckCircle, Clock, AlertCircle, Filter, MoreHorizontal, Pencil, ArrowRight, KeyRound, File, Upload, PowerIcon } from "lucide-react";

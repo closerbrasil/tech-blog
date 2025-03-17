@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CalendarIcon, Clock3Icon, BookmarkIcon, MessageSquareIcon, ShareIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,14 @@ const articles = [
     id: 1,
     title: "The Complete Guide to React Server Components in 2025",
     description: "Learn how to leverage React Server Components to build faster, more efficient web applications with improved user experience.",
-    image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=2070&auto=format&fit=crop",
+    image: "https://placehold.co/800x400/1a1a1a/ffffff?text=React+Server+Components",
     category: "React",
     isPremium: true,
     readTime: "12 min",
     date: "May 15, 2025",
     author: {
       name: "Jane Cooper",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      avatar: "https://placehold.co/100/1a1a1a/ffffff?text=JC",
     },
     comments: 24,
     slug: "complete-guide-react-server-components-2025",
@@ -26,14 +27,14 @@ const articles = [
     id: 2,
     title: "Building Scalable Microservices with Go and Kubernetes",
     description: "A comprehensive tutorial on designing, implementing, and deploying microservices using Golang and Kubernetes.",
-    image: "https://images.unsplash.com/photo-1642059893618-eee386500798?q=80&w=2069&auto=format&fit=crop",
+    image: "https://placehold.co/800x400/1a1a1a/ffffff?text=Go+and+Kubernetes",
     category: "DevOps",
     isPremium: false,
     readTime: "15 min",
     date: "May 10, 2025",
     author: {
       name: "Alex Morgan",
-      avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      avatar: "https://placehold.co/100/1a1a1a/ffffff?text=AM",
     },
     comments: 18,
     slug: "building-scalable-microservices-go-kubernetes",
@@ -42,14 +43,14 @@ const articles = [
     id: 3,
     title: "Machine Learning for Frontend Developers: Practical Applications",
     description: "Discover how frontend developers can use machine learning to enhance user interfaces and create personalized experiences.",
-    image: "https://images.unsplash.com/photo-1509718443690-d8e2fb3474b7?q=80&w=2070&auto=format&fit=crop",
+    image: "https://placehold.co/800x400/1a1a1a/ffffff?text=Machine+Learning",
     category: "AI/ML",
     isPremium: true,
     readTime: "10 min",
     date: "May 5, 2025",
     author: {
       name: "Sarah Chen",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      avatar: "https://placehold.co/100/1a1a1a/ffffff?text=SC",
     },
     comments: 31,
     slug: "machine-learning-frontend-developers-applications",
@@ -71,10 +72,12 @@ export default function FeaturedArticles() {
           <Card key={article.id} className="overflow-hidden">
             <div className="flex flex-col md:flex-row">
               <div className="md:w-1/3 h-48 md:h-auto relative">
-                <img
+                <Image
                   src={article.image}
                   alt={article.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 33vw"
                 />
                 {article.isPremium && (
                   <div className="absolute top-2 left-2">

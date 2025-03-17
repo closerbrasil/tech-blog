@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
@@ -46,7 +48,7 @@ import {
   PopoverTrigger 
 } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/mcp";
 import type { Noticia, Categoria, Autor, Tag } from "@shared/schema";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
@@ -60,8 +62,7 @@ const editPostSchema = z.object({
   imageUrl: z.string().optional(),
   autorId: z.string().uuid("Selecione um autor válido"),
   categoriaId: z.string().uuid("Selecione uma categoria válida"),
-  status: z.enum(["rascunho", "publicado", "agendado"]),
-  visibilidade: z.enum(["publico", "assinantes", "privado"]),
+  status: z.enum(["PUBLIC", "PRIVATE"]),
   schemaType: z.enum(["Article", "NewsArticle", "BlogPosting"]),
   tempoLeitura: z.string().optional(),
 });
@@ -133,8 +134,7 @@ export default function EditPostPage() {
       imageUrl: "",
       autorId: "",
       categoriaId: "",
-      status: "publicado",
-      visibilidade: "publico",
+      status: "PRIVATE",
       schemaType: "Article",
       tempoLeitura: "5 min",
     },
@@ -152,7 +152,6 @@ export default function EditPostPage() {
         autorId: string;
         categoriaId: string;
         status: string; 
-        visibilidade: string;
         schemaType: string;
         tempoLeitura?: string;
       };
@@ -165,8 +164,7 @@ export default function EditPostPage() {
         imageUrl: noticiaData.imageUrl || "",
         autorId: noticiaData.autorId,
         categoriaId: noticiaData.categoriaId,
-        status: noticiaData.status as "rascunho" | "publicado" | "agendado", 
-        visibilidade: noticiaData.visibilidade as "publico" | "assinantes" | "privado",
+        status: noticiaData.status as "PUBLIC" | "PRIVATE",
         schemaType: noticiaData.schemaType as "Article" | "NewsArticle" | "BlogPosting",
         tempoLeitura: noticiaData.tempoLeitura || "5 min",
       });
@@ -326,8 +324,7 @@ export default function EditPostPage() {
   const createTagMutation = useMutation({
     mutationFn: async (tagName: string) => {
       return apiRequest('POST', '/api/tags', { 
-        nome: tagName,
-        slug: tagName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, "").replace(/\s+/g, "-")
+        tagId: tagName
       });
     },
     onSuccess: () => {
@@ -375,7 +372,7 @@ export default function EditPostPage() {
   // Mutation para remover tag de uma notícia
   const removeTagMutation = useMutation({
     mutationFn: async ({ tagId }: { tagId: string }) => {
-      return apiRequest('DELETE', `/api/noticias/${postId}/tags/${tagId}`);
+      return apiRequest('DELETE', `/api/noticias/${postId}/tags/${tagId}`, { tagId }, {});
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/noticias/${postId}/tags`] });
@@ -777,39 +774,15 @@ export default function EditPostPage() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Status</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Selecione o status" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                  <SelectItem value="rascunho">Rascunho</SelectItem>
-                                  <SelectItem value="publicado">Publicado</SelectItem>
-                                  <SelectItem value="agendado">Agendado</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="visibilidade"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Visibilidade</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione a visibilidade" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="publico">Público</SelectItem>
-                                  <SelectItem value="assinantes">Assinantes</SelectItem>
-                                  <SelectItem value="privado">Privado</SelectItem>
+                                  <SelectItem value="PRIVATE">Privado</SelectItem>
+                                  <SelectItem value="PUBLIC">Público</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -930,8 +903,6 @@ export default function EditPostPage() {
                               <TiptapEditor
                                 content={field.value}
                                 onChange={field.onChange}
-                                placeholder="Comece a escrever seu conteúdo..."
-                                editorClassName="h-full w-full overflow-y-auto px-4 py-3"
                               />
                             </div>
                           </div>

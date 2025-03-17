@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AdminLayout from "@/layouts/AdminLayout";
@@ -25,10 +27,19 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Trash2, Loader2, XCircle, Eye, Link as LinkIcon } from "lucide-react";
 import type { Comentario } from "@shared/schema";
 
-// Interface estendida para mapear corretamente os campos do comentário
-interface ComentarioVisao extends Comentario {
-  autor: string; // Representa autorNome formatado
-  email: string; // Campo adicional para exibição
+// First, let's properly define the Comentario interface if it's not available from @shared/schema
+interface Comentario {
+  id: string;
+  autorNome: string;
+  conteudo: string;
+  aprovado: boolean;
+  criadoEm: Date;
+}
+
+// Then fix the ComentarioVisao interface
+interface ComentarioVisao extends Omit<Comentario, 'autorNome'> {
+  autor: string;
+  email: string;
   noticia?: {
     titulo?: string;
     slug?: string;
@@ -151,12 +162,15 @@ export default function CommentsPage() {
   // Mapear Comentario para ComentarioVisao
   const mapToComentarioVisao = (comentario: Comentario): ComentarioVisao => {
     return {
-      ...comentario,
+      id: comentario.id,
       autor: comentario.autorNome || "Anônimo",
-      email: "exemplo@email.com", // Valor temporário para testes - não está no schema
+      conteudo: comentario.conteudo,
+      aprovado: comentario.aprovado,
+      criadoEm: comentario.criadoEm,
+      email: "exemplo@email.com", // Valor temporário para testes
       noticia: {
-        titulo: "Título da notícia", // Valor temporário - idealmente viria da API
-        slug: "slug-da-noticia"      // Valor temporário - idealmente viria da API
+        titulo: "Título da notícia", // Valor temporário
+        slug: "slug-da-noticia"      // Valor temporário
       }
     };
   };
@@ -374,7 +388,7 @@ export default function CommentsPage() {
                 <div>
                   <h4 className="text-sm font-semibold text-gray-500">Conteúdo</h4>
                   <div className="p-3 bg-gray-50 rounded-md mt-1">
-                    {selectedComment.conteudo}
+                    {String(selectedComment.conteudo)}
                   </div>
                 </div>
               </div>
@@ -386,7 +400,7 @@ export default function CommentsPage() {
                   variant="outline"
                   className="mr-auto bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                   onClick={() => {
-                    handleApproveClick(selectedComment.id);
+                    handleApproveClick(String(selectedComment.id));
                     setViewDialogOpen(false);
                   }}
                   disabled={approveMutation.isPending}

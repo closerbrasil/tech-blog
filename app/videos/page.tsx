@@ -19,8 +19,7 @@ interface DatabaseVideo {
   duracao: number | null
   visualizacoes: number | null
   publicado_em: Date
-  status: string
-  visibilidade: string
+  status: 'PUBLIC' | 'PRIVATE'
   autores: {
     nome: string
     avatar_url: string
@@ -38,19 +37,11 @@ async function getVideos() {
         projectId: process.env.NEON_PROJECT_ID!,
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
-          SELECT 
-            v.*,
-            a.nome as autor_nome,
-            a.avatar_url as autor_avatar_url,
-            c.nome as categoria_nome,
-            c.cor as categoria_cor
+          SELECT v.*
           FROM videos v
-          LEFT JOIN autores a ON v.autor_id = a.id
-          LEFT JOIN categorias c ON v.categoria_id = c.id
-          WHERE v.status = 'publicado' 
-            AND v.visibilidade = 'PUBLIC'
-            AND v.playback_id IS NOT NULL
-          ORDER BY v.publicado_em DESC NULLS LAST, v.criado_em DESC
+          WHERE v.status = 'PUBLIC'
+          ORDER BY v.criado_em DESC
+          LIMIT 12
         `,
       }
     });
@@ -137,6 +128,40 @@ export default async function VideosPage() {
             ))}
           </div>
         )}
+
+        {/* Seção Continue Lendo */}
+        <div className="mt-16 pt-8 border-t border-gray-200 dark:border-gray-800">
+          <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+            <svg 
+              className="w-6 h-6" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M17 8l4 4m0 0l-4 4m4-4H3"
+              />
+            </svg>
+            Continue Lendo
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {videos.slice(0, 3).map((video) => (
+              <VideoCard
+                key={`continue-${video.id}`}
+                titulo={video.titulo}
+                slug={video.slug}
+                thumbnail_url={video.thumbnail_url}
+                meta_descricao={video.meta_descricao}
+                autor={video.autor}
+                visualizacoes={video.visualizacoes}
+                className="bg-gray-100 dark:bg-gray-800"
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </main>
   );

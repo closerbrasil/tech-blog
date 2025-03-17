@@ -16,30 +16,42 @@ export interface Noticia {
   meta_descricao?: string;
   palavra_chave?: string;
   tempo_leitura?: string;
-  status: string;
-  visibilidade: string;
+  status: 'PUBLIC' | 'PRIVATE';
   imagem_alt?: string;
 }
 
 export interface Video {
   id: string;
-  video_id: string;
-  plataforma: string;
   titulo: string;
-  thumbnail_url?: string;
-  embed_url?: string;
-  duracao?: number;
-  visualizacoes?: number;
-  curtidas?: number;
+  descricao: string;
+  transcricao: string;
+  youtube_url: string;
+  url_video: string;
+  asset_id: string;
+  playback_id: string;
+  track_id: string;
+  origem: string;
+  status: 'PUBLIC' | 'PRIVATE';
   slug: string;
-  autor_id?: string;
-  categoria_id?: string;
-  publicado_em: string;
+  thumbnail_url: string;
+  criado_em: string;
   atualizado_em: string;
-  status: string;
-  visibilidade: string;
-  conteudo: string;
-  meta_descricao: string;
+}
+
+export interface VideoInput {
+  id?: string;
+  titulo: string;
+  descricao: string;
+  transcricao: string;
+  youtube_url: string;
+  url_video: string;
+  asset_id: string;
+  playback_id: string;
+  track_id: string;
+  origem: string;
+  status: 'PUBLIC' | 'PRIVATE';
+  slug: string;
+  thumbnail_url: string;
 }
 
 export interface Autor {

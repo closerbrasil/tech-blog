@@ -57,13 +57,23 @@ async function findBestVideoId(formats: string): Promise<string> {
   return bestVideoId;
 }
 
-async function uploadToMux(filePath: string): Promise<{ asset_id: string; playback_id: string }> {
+async function uploadToMux(filePath: string): Promise<{ asset_id: string; playback_id: string; track_id?: string }> {
   // Cria um novo upload direto
   const upload = await mux.video.uploads.create({
     new_asset_settings: {
       playback_policy: ['public'],
       video_quality: 'plus',
-      max_resolution_tier: '1080p'
+      max_resolution_tier: '1080p',
+      input: [
+        {
+          generated_subtitles: [
+            {
+              language_code: "pt",
+              name: "Português (gerado automaticamente)"
+            }
+          ]
+        }
+      ]
     },
     cors_origin: '*'
   });
@@ -124,31 +134,108 @@ async function uploadToMux(filePath: string): Promise<{ asset_id: string; playba
     throw new Error('Não foi possível obter o Playback ID do Mux');
   }
 
+  // Aguarda a legenda ser gerada
+  let trackId;
+  if (asset.tracks) {
+    const textTrack = asset.tracks.find(track => 
+      track.type === 'text' && 
+      track.text_source === 'generated_vod' &&
+      track.language_code === 'pt'
+    );
+    if (textTrack) {
+      trackId = textTrack.id;
+    }
+  }
+
   return {
     asset_id: asset.id,
-    playback_id: playbackId
+    playback_id: playbackId,
+    track_id: trackId
   };
+}
+
+async function getVideoMetadata(url: string): Promise<{ title: string; description: string }> {
+  const command = `yt-dlp "${url}" --get-title --get-description`;
+  const { stdout } = await execAsync(command);
+  const [title, ...descriptionLines] = stdout.trim().split('\n');
+  return {
+    title: title || '',
+    description: descriptionLines.join('\n') || ''
+  };
+}
+
+async function getVideoTranscription(url: string): Promise<string> {
+  const downloadsDir = path.join(process.cwd(), 'downloads');
+  const tempSubsPath = path.join(downloadsDir, 'temp_subs');
+  
+  try {
+    // Baixa a legenda em português usando TTML e converte para SRT
+    const command = `yt-dlp "${url}" --skip-download --write-subs --write-auto-subs --sub-lang "pt,pt-BR" --sub-format ttml --convert-subs srt -o "${tempSubsPath}"`;
+    await execAsync(command);
+
+    // Procura pelo arquivo de legenda gerado
+    const files = fs.readdirSync(downloadsDir);
+    const subsFile = files.find(file => 
+      file.startsWith('temp_subs') && 
+      (file.endsWith('.pt.srt') || file.endsWith('.pt-BR.srt'))
+    );
+
+    if (!subsFile) {
+      console.log('⚠️ Nenhuma legenda em português encontrada');
+      return '';
+    }
+
+    // Lê o conteúdo da legenda
+    const subsPath = path.join(downloadsDir, subsFile);
+    let transcription = fs.readFileSync(subsPath, 'utf-8');
+
+    // Remove timestamps e números de sequência
+    transcription = transcription
+      .split('\n')
+      .filter(line => 
+        !line.match(/^\d+$/) && // Remove números de sequência
+        !line.match(/^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$/) && // Remove timestamps
+        line.trim() !== '' // Remove linhas vazias
+      )
+      .join(' ')
+      .replace(/<[^>]*>/g, ''); // Remove tags HTML
+
+    // Remove o arquivo temporário
+    fs.unlinkSync(subsPath);
+
+    return transcription.trim();
+  } catch (error) {
+    console.error('❌ Erro ao obter transcrição:', error);
+    return '';
+  }
 }
 
 async function saveToDatabase(data: {
   title: string;
+  description: string;
+  transcription: string;
   youtube_url: string;
   url_storage: string;
   category_id: string;
+  additional_categories?: string[];
   asset_id: string;
   playback_id: string;
+  track_id?: string;
 }): Promise<void> {
-  // Validação dos dados antes de salvar
-  if (!data.title || !data.youtube_url || !data.url_storage || !data.category_id || !data.asset_id || !data.playback_id) {
-    throw new Error('Dados incompletos para salvar no banco de dados');
-  }
-
   const now = new Date().toISOString();
-  const slug = data.title.toLowerCase()
+  const slug = data.title
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  const result = await mcp_neon_run_sql({
+  const thumbnail_url = data.playback_id 
+    ? `https://image.mux.com/${data.playback_id}/thumbnail.jpg`
+    : null;
+
+  // Inserir o vídeo
+  const videoResult = await mcp_neon_run_sql({
     params: {
       projectId: process.env.NEON_PROJECT_ID!,
       databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
@@ -156,15 +243,17 @@ async function saveToDatabase(data: {
         INSERT INTO videos (
           id,
           titulo,
+          descricao,
+          transcricao,
           youtube_url,
           url_video,
-          categoria_id,
           asset_id,
           playback_id,
+          track_id,
           origem,
           status,
-          visibilidade,
           slug,
+          thumbnail_url,
           criado_em,
           atualizado_em
         )
@@ -176,31 +265,69 @@ async function saveToDatabase(data: {
           $4,
           $5,
           $6,
-          'youtube',
-          'publicado',
-          'PUBLIC',
           $7,
           $8,
-          $8
+          'youtube',
+          'PRIVATE',
+          $9,
+          $10,
+          $11,
+          $11
         )
         RETURNING id
       `,
       values: [
         data.title,
+        data.description,
+        data.transcription,
         data.youtube_url,
         data.url_storage,
-        data.category_id,
         data.asset_id,
         data.playback_id,
+        data.track_id || null,
         slug,
+        thumbnail_url,
         now
       ]
     }
   });
 
-  // Verifica se o registro foi criado com sucesso
-  if (!result) {
+  if (!videoResult?.rows?.[0]?.id) {
     throw new Error('Falha ao salvar o vídeo no banco de dados');
+  }
+
+  const videoId = videoResult.rows[0].id;
+
+  // Inserir a categoria principal
+  await mcp_neon_run_sql({
+    params: {
+      projectId: process.env.NEON_PROJECT_ID!,
+      databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
+      sql: `
+        INSERT INTO videos_categorias (video_id, categoria_id)
+        VALUES ($1, $2)
+      `,
+      values: [videoId, data.category_id]
+    }
+  });
+
+  // Inserir categorias adicionais
+  if (data.additional_categories?.length) {
+    const additionalCategoriesValues = data.additional_categories
+      .map((_, i) => `($1, $${i + 2})`)
+      .join(', ');
+
+    await mcp_neon_run_sql({
+      params: {
+        projectId: process.env.NEON_PROJECT_ID!,
+        databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
+        sql: `
+          INSERT INTO videos_categorias (video_id, categoria_id)
+          VALUES ${additionalCategoriesValues}
+        `,
+        values: [videoId, ...data.additional_categories]
+      }
+    });
   }
 
   console.log('✅ Salvo no banco de dados');
@@ -214,6 +341,16 @@ async function downloadYouTubeVideo(url: string, categoryId: string) {
   }
 
   console.log('📁 Diretório de downloads:', downloadsDir);
+
+  // Obtém os metadados do vídeo
+  console.log('📝 Obtendo metadados do vídeo...');
+  const metadata = await getVideoMetadata(url);
+  console.log('✅ Metadados obtidos');
+
+  // Obtém a transcrição do vídeo
+  console.log('📝 Obtendo transcrição do vídeo...');
+  const transcription = await getVideoTranscription(url);
+  console.log(transcription ? '✅ Transcrição obtida' : '⚠️ Nenhuma transcrição disponível');
 
   // Obtém os formatos disponíveis
   const formats = await getAvailableFormats(url);
@@ -267,22 +404,24 @@ async function downloadYouTubeVideo(url: string, categoryId: string) {
 
   // Faz upload para o Mux
   console.log('☁️ Iniciando upload para o Mux...');
-  const { asset_id, playback_id } = await uploadToMux(filePath);
+  const { asset_id, playback_id, track_id } = await uploadToMux(filePath);
   console.log('✅ Upload concluído. Asset ID:', asset_id, 'Playback ID:', playback_id);
   
   // Gera a URL do vídeo
   const url_storage = `https://stream.mux.com/${playback_id}`;
   
   // Salva no banco de dados
-  const title = path.basename(filePath, path.extname(filePath));
   console.log('💾 Salvando no banco de dados...');
   await saveToDatabase({
-    title,
+    title: metadata.title,
+    description: metadata.description,
+    transcription,
     youtube_url: url,
     url_storage,
     category_id: categoryId,
     asset_id,
-    playback_id
+    playback_id,
+    track_id
   });
   console.log('✅ Salvo no banco de dados');
   
@@ -295,22 +434,58 @@ async function downloadYouTubeVideo(url: string, categoryId: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { url, categoryId } = await request.json();
+    const { url, category_id, additional_categories } = await request.json();
 
-    if (!url || !categoryId) {
+    if (!url) {
       return NextResponse.json(
-        { error: 'URL do vídeo e ID da categoria são obrigatórios' },
+        { error: 'URL é obrigatória' },
         { status: 400 }
       );
     }
 
-    const publicUrl = await downloadYouTubeVideo(url, categoryId);
+    if (!category_id) {
+      return NextResponse.json(
+        { error: 'Categoria principal é obrigatória' },
+        { status: 400 }
+      );
+    }
+
+    console.log('🎥 Iniciando download do vídeo:', url);
+
+    // Verifica se o vídeo já existe
+    const existingVideo = await mcp_neon_run_sql({
+      params: {
+        projectId: process.env.NEON_PROJECT_ID!,
+        databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
+        sql: `
+          SELECT id, url_video 
+          FROM videos 
+          WHERE youtube_url = $1
+        `,
+        values: [url]
+      }
+    });
+
+    if (existingVideo?.rows?.length > 0) {
+      return NextResponse.json(
+        { 
+          error: 'Este vídeo já foi baixado anteriormente',
+          existingUrl: existingVideo.rows[0].url_video
+        },
+        { status: 409 }
+      );
+    }
+
+    const publicUrl = await downloadYouTubeVideo(url, category_id);
 
     return NextResponse.json({ success: true, url: publicUrl });
   } catch (error) {
-    console.error('Erro ao processar o vídeo:', error);
+    console.error('❌ Erro ao processar vídeo:', error);
+    
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Erro ao processar o vídeo' },
+      { 
+        error: error instanceof Error ? error.message : 'Erro ao processar vídeo'
+      },
       { status: 500 }
     );
   }

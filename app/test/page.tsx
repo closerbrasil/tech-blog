@@ -1,11 +1,10 @@
 import Image from 'next/image'
-import { prisma } from '@/lib/db'
+import { db } from '@/lib/db'
 
 export default async function TestPage() {
-  const videos = await prisma.videos.findMany({
+  const videos = await db.video.findMany({
     where: {
-      status: 'POSTED',
-      visibilidade: 'PUBLICO'
+      status: 'PUBLIC'
     },
     include: {
       autores: true,

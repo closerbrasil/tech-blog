@@ -6,7 +6,7 @@ export interface VideoFormValues {
   video_id?: string;
   thumbnail_url?: string;
   duracao?: number;
-  visibilidade: "PUBLICO" | "PRIVADO" | "ASSINANTES";
+  status: "PUBLIC" | "PRIVATE";
 }
 
 export interface Categoria {
@@ -28,24 +28,62 @@ export interface VideoFormProps {
 }
 
 export interface VideoType {
+  id?: string;
+  titulo: string;
+  descricao: string;
+  transcricao?: string;
+  youtube_url: string;
+  url_video: string;
+  asset_id: string;
+  playback_id: string;
+  track_id: string;
+  origem: string;
+  status: "PUBLIC" | "PRIVATE";
+  slug: string;
+  thumbnail_url: string;
+  categorias?: {
+    id: string;
+    nome: string;
+    cor?: string;
+  };
+  autores?: {
+    id: string;
+    nome: string;
+    avatar_url?: string;
+    cargo?: string;
+  };
+}
+
+export interface Video {
   id: string;
   titulo: string;
-  descricao?: string;
-  categoria_id: string;
-  categoria_nome?: string;
-  autor_id: string;
-  autor_nome?: string;
-  visibilidade: "PUBLICO" | "PRIVADO" | "ASSINANTES";
-  video_id: string;
+  descricao: string;
+  transcricao: string;
+  youtube_url: string;
+  url_video: string;
+  asset_id: string;
+  playback_id: string;
+  track_id: string;
+  origem: string;
+  status: "PUBLIC" | "PRIVATE";
   slug: string;
-  status: "POSTED" | "NOT_POSTED";
-  publicado_em: string;
+  thumbnail_url: string;
+  criado_em: string;
   atualizado_em: string;
-  thumbnail_url?: string;
-  duracao?: number;
-  visualizacoes?: number;
-  curtidas?: number;
-  recursos?: string;
-  capitulos?: string;
-  plataforma: string;
+}
+
+export interface VideoInput {
+  id?: string;
+  titulo: string;
+  descricao: string;
+  transcricao?: string;
+  youtube_url: string;
+  url_video: string;
+  asset_id: string;
+  playback_id: string;
+  track_id: string;
+  origem: string;
+  status: "PUBLIC" | "PRIVATE";
+  slug: string;
+  thumbnail_url: string;
 } 

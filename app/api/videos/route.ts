@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { mcp_neon_run_sql } from '@/lib/db';
-import { insertVideoSchema } from '@/shared/schema';
+import { insertVideoSchema, videoInputSchema } from '@/shared/schema';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET() {
@@ -11,20 +11,44 @@ export async function GET() {
 
     const result = await mcp_neon_run_sql({
       params: {
-        projectId: process.env.NEON_PROJECT_ID!,
-        databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
-          SELECT * FROM videos 
-          WHERE status = 'publicado' AND visibilidade = 'publico'
-          ORDER BY criado_em DESC
+          SELECT 
+            v.*,
+            c.nome as categoria_nome,
+            c.cor as categoria_cor,
+            a.nome as autor_nome,
+            a.avatar_url as autor_avatar_url,
+            a.cargo as autor_cargo
+          FROM videos v
+          LEFT JOIN videos_categorias vc ON v.id = vc.video_id
+          LEFT JOIN categorias c ON vc.categoria_id = c.id
+          LEFT JOIN autores a ON v.autor_id = a.id
+          ORDER BY v.criado_em DESC
+          LIMIT 12
         `
       }
     });
 
+    // Transform the results to include nested objects
+    const videos = result.rows.map(row => ({
+      ...row,
+      categorias: row.categoria_nome ? {
+        id: row.categoria_id,
+        nome: row.categoria_nome,
+        cor: row.categoria_cor
+      } : undefined,
+      autores: row.autor_nome ? {
+        id: row.autor_id,
+        nome: row.autor_nome,
+        avatar_url: row.autor_avatar_url,
+        cargo: row.autor_cargo
+      } : undefined
+    }));
+
     return new NextResponse(
       JSON.stringify({
-        videos: result.rows,
-        total: result.rows.length,
+        videos,
+        total: videos.length,
       }),
       {
         headers: {
@@ -59,41 +83,54 @@ export async function POST(request: Request) {
     const data = await request.json();
     const validatedData = insertVideoSchema.parse({
       ...data,
-      status: data.status || 'rascunho',
-      visibilidade: data.visibilidade || 'privado',
+      status: data.status || 'PRIVATE',
       meta_descricao: data.meta_descricao || data.descricao,
       transcricao: data.transcricao || data.descricao,
       keywords: data.keywords || [],
       origem: data.origem || 'mux'
     });
 
-    const id = uuidv4();
     const now = new Date().toISOString();
-    
-    // Preparar campos e valores para a inserção
-    const fields = ['id', 'criado_em', 'atualizado_em', ...Object.keys(validatedData)];
-    const values = fields.map(field => {
-      if (field === 'id') return `'${id}'`;
-      if (field === 'criado_em' || field === 'atualizado_em') return `'${now}'`;
-      
-      const value = validatedData[field as keyof typeof validatedData];
-      if (value === null || value === undefined) {
-        return 'NULL';
-      }
-      if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
-      if (typeof value === 'object') return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
-      return `'${value}'`;
-    });
 
     const result = await mcp_neon_run_sql({
       params: {
-        projectId: process.env.NEON_PROJECT_ID!,
-        databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
-          INSERT INTO videos (${fields.join(', ')})
-          VALUES (${values.join(', ')})
-          RETURNING *
-        `
+          INSERT INTO videos (
+            titulo,
+            descricao,
+            transcricao,
+            youtube_url,
+            url_video,
+            asset_id,
+            playback_id,
+            track_id,
+            origem,
+            status,
+            slug,
+            thumbnail_url,
+            criado_em,
+            atualizado_em
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+          )
+          RETURNING id
+        `,
+        values: [
+          validatedData.titulo,
+          validatedData.descricao,
+          validatedData.transcricao,
+          validatedData.youtube_url,
+          validatedData.url_video,
+          validatedData.asset_id,
+          validatedData.playback_id,
+          validatedData.track_id,
+          validatedData.origem,
+          validatedData.status,
+          validatedData.slug,
+          validatedData.thumbnail_url,
+          now,
+          now
+        ]
       }
     });
 

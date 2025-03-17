@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import SEOHead from "@/components/SEOHead";
@@ -34,10 +36,18 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Pencil, Trash2, Loader2, PlusCircle } from "lucide-react";
-import type { Categoria, InsertCategoria } from "@shared/schema";
-import { insertCategoriaSchema } from "@shared/schema";
+import type { Categoria, InsertCategoria } from "../../../shared/schema";
+import { insertCategoriaSchema } from "../../../shared/schema";
 import AdminLayout from "@/layouts/AdminLayout";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 // Estender o schema para adicionar validações específicas
 const categoriaSchema = insertCategoriaSchema.extend({
@@ -46,6 +56,10 @@ const categoriaSchema = insertCategoriaSchema.extend({
   cor: z.string().regex(/^#([A-Fa-f0-9]{6})$/, {
     message: "A cor deve ser um valor hexadecimal válido (ex: #3b82f6)"
   }),
+  parent_id: z.union([
+    z.string().uuid("ID da categoria pai inválido"),
+    z.literal("none")
+  ]).optional().transform(val => val === "none" ? undefined : val),
 });
 
 type FormValues = z.infer<typeof categoriaSchema>;
@@ -65,6 +79,7 @@ export default function CategoriesPage() {
       slug: "",
       descricao: "",
       cor: "#3b82f6", // Azul por padrão
+      parent_id: "none",
     },
   });
 
@@ -160,6 +175,7 @@ export default function CategoriesPage() {
       slug: "",
       descricao: "",
       cor: "#3b82f6", // Azul padrão
+      parent_id: "none",
     });
     setSelectedCategory(null);
     setIsDialogOpen(true);
@@ -171,6 +187,7 @@ export default function CategoriesPage() {
       slug: categoria.slug,
       descricao: categoria.descricao || "",
       cor: categoria.cor || "#3b82f6",
+      parent_id: categoria.parent_id || "none",
     });
     setSelectedCategory(categoria);
     setIsDialogOpen(true);
@@ -321,6 +338,47 @@ export default function CategoriesPage() {
                           }}
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Categoria Pai */}
+                <FormField
+                  control={form.control}
+                  name="parent_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria Pai (opcional)</FormLabel>
+                      <FormControl>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione uma categoria pai" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Nenhuma (categoria raiz)</SelectItem>
+                            {categorias?.filter(cat => cat.id !== selectedCategory?.id).map((categoria) => (
+                              <SelectItem 
+                                key={categoria.id} 
+                                value={categoria.id}
+                                className={cn(
+                                  "pl-[calc(12px_*_var(--level,0))]",
+                                  { "opacity-50 cursor-not-allowed": categoria.id === selectedCategory?.id }
+                                )}
+                                disabled={categoria.id === selectedCategory?.id}
+                              >
+                                {categoria.nome}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormDescription>
+                        Escolha uma categoria pai para criar uma hierarquia
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
