@@ -34,7 +34,6 @@ export async function GET() {
       }
     );
   } catch (error) {
-    console.error('Erro ao buscar vídeos:', error);
     return new NextResponse(
       JSON.stringify({ 
         error: "Erro ao buscar vídeos",

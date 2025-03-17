@@ -7,12 +7,10 @@ export async function POST() {
     const headersList = await headers();
     const origin = headersList.get("origin") || "*";
     
-    console.log("Criando esquema do banco de dados...");
-    
     let message = "Erro ao conectar ao banco de dados";
     let success = false;
     let details = null;
-    let tables = [];
+    let tables: string[] = [];
 
     try {
       // Criar tabela de vídeos se não existir
@@ -42,7 +40,8 @@ export async function POST() {
               publicado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
               atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
-          `
+          `,
+        },
       });
 
       // Criar tabela de categorias se não existir
@@ -61,7 +60,8 @@ export async function POST() {
               criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
               atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
-          `
+          `,
+        },
       });
 
       // Criar tabela de autores se não existir
@@ -81,7 +81,8 @@ export async function POST() {
               criado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
               atualizado_em TIMESTAMP WITH TIME ZONE DEFAULT NOW()
             );
-          `
+          `,
+        },
       });
 
       // Adicionar foreign keys
@@ -106,7 +107,8 @@ export async function POST() {
                 WHEN duplicate_object THEN null;
               END;
             END $$;
-          `
+          `,
+        },
       });
 
       // Verificar tabelas criadas
@@ -119,14 +121,14 @@ export async function POST() {
             FROM information_schema.tables
             WHERE table_schema = 'public'
             ORDER BY table_name;
-          `
+          `,
+        },
       });
 
       tables = tablesResult.rows.map((row: { table_name: string }) => row.table_name);
       success = true;
       message = "Esquema criado com sucesso";
     } catch (dbError: any) {
-      console.error("Erro ao criar esquema:", dbError);
       details = dbError.message;
       message = "Erro ao criar esquema";
     }

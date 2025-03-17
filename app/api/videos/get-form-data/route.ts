@@ -25,11 +25,6 @@ export async function GET() {
       })
     ]);
 
-    console.log('Dados recuperados:', {
-      categorias: categoriasResult.rows,
-      autores: autoresResult.rows
-    });
-
     return new NextResponse(
       JSON.stringify({
         categorias: categoriasResult.rows,

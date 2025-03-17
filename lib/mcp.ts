@@ -22,7 +22,6 @@ const pool = new Pool({
 export async function mcp_neon_run_sql({ params }: MCP_RunSQLParams): Promise<PgQueryResult> {
   try {
     const { sql, values } = params;
-    console.log('Executing SQL:', sql, 'with values:', values);
     const result = await pool.query(sql, values);
     return result;
   } catch (error) {

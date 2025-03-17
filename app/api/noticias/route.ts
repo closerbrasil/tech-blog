@@ -30,7 +30,6 @@ export async function GET() {
       total: parseInt(resultTotal.rows[0].total)
     });
   } catch (error) {
-    console.error('Erro ao buscar notícias:', error);
     return NextResponse.json(
       { error: 'Erro ao buscar notícias' },
       { status: 500 }
@@ -66,7 +65,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.rows[0]);
   } catch (error) {
-    console.error('Erro ao criar notícia:', error);
     return NextResponse.json(
       { error: 'Erro ao criar notícia' },
       { status: 500 }

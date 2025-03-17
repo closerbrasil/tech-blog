@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "cedar-bot-263413",
+  "private_key_id": "d676a565c63b5ce3bc190ae61f9bbbc9ad9e27bd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDOPSEFhyvEgqWt\ngVlf0UFQjlOOyzA43X6P0Kh/Tc1n7THjszAsWXKqnu+oIBSwVAjd8EhhOQNexcgq\n+GrlXTZTy3/9g5bl7wp2KXhoUcLaEBKeFFsHX9bBoibQ+O2YV4bL+Vb2MQT9iwvD\nLEvrbEZV6a8O2RRPP2QGIsC4p6pzmidoUyEkeGu9/0tamfEFI8GCDYrdeVzIyEL0\nvHPg/oqDSlepUfKEFgNwlMkog/Ost4C5CvFxsZwJkpQm6kQzY+w4NwkO+grECbAL\nqQ+ziZEQ4TRKJgq3RNHrRC7t2WZtjmHqhsGWfep3D14yOHN4lLuCDas+fruXVy2N\nhXIm8CTpAgMBAAECggEAY5asH+2+SkWmOEraPAUha4NWwQDH9+WpDEw/WT3aHsGw\nkhoAfKHy14YpBv/6zYy+vWEeqmfsAzMxbeKIR9qDdeIyG1qUHtMXs6hh3soAc+lH\n/DKrJDv4yYcCBG332VUGn+92uSpBlSc0FlqJDJU7v5e4s0xK3Nuo8reMZX59NhWP\nyuiw1+nrLQ6+yToXL4I2xnsFnkW/VjKFQ0WLb/VSb3G5VMdOzdPx3DMbbS/Z4WsI\nLxMYgkKnG+MQ0GH90nqYlW/Ao10TwxcNxpCpIfH45WmfNCcYTJOUMoEu9j4kN0ib\nhJ3p6+om2S8JjLw6uoI1nyp8iNELjhyzBH/NXlfrOwKBgQDsWDZLL+uyHmYR+/eT\nGs9nMWGWjk0CWDFlDBsCAozMiJUerqnkX0MbAr1KUZo7PHxvuaRKszEBcWb/ndv+\ndGrFj9RmZO4ADe8qav8phzIZKjrKJonfRshwrYQuPybGVH/BlcU0zkJDGirYNz6+\nvqZ8ApwnFzmPvN5W564Pny93ewKBgQDfY/aK8A7YhmWSHDWeQ/LEvcIljg+gh9Cm\nQ4AAboiyT/PKo+SURb/lerVK6ViscZk5ypyQ9vb9HEKQg+/Pb21arA4d/VuOIkF9\nUaCHsEhJMaV5rTIO0FVqS+xs+KRLoBUH1zrcmvbgOW0ASxoyekBvVdSzyxIwaygD\nNuzulZM16wKBgQCBxZniROjE/74J5/Ezu8fgIJQ2B+KvA9/zXOdDfkTzVZeTplIw\nzEHbhfCL6yylk/u7mRJl1eh1o1/rwTD3kdLCscvtgUPRkdUd1GxQ0CQo/zASqYCQ\nsZwDirMGdbSDuAgCMot7CDoIAElAOW1hbOubMg+twynfC9SFoWbIux5kGwKBgQCQ\nqyIc9D4JB3B74PzwU7zCoMk8nPWN1qbPJeOdY/fu0kxlrSH4y/rsWD1UGC4u7xp2\nDLq8PtPRMx4AjREe22CMWeSCk3NZZuHWkKhPd2A41of9dqZ2ZYELZ8PjBlsQBsnX\n3BDokQrURxxKFlkO25EjCQjIrvhGlv7Api9mi0NcpQKBgEjuJoRfxYaGVk6RIAGI\nNHCR+sBwtAeeIsmXw+tXFu+EbAXYQT/P1puZz14WPHk1n1MyQwf5rx9BJMKNFpIe\nqnP6ncXzMpDR2LwRA/mEvTlcW04cHCCbGJSs57yfDqA4hmvIRgV2mfWchYVRIcou\nDZYsP+zxA83YZHcLsLZijxAw\n-----END PRIVATE KEY-----\n",
+  "client_email": "closer-brasil@cedar-bot-263413.iam.gserviceaccount.com",
+  "client_id": "116836901615005671814",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/closer-brasil%40cedar-bot-263413.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
