@@ -33,3 +33,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# YouTube Downloader
+/downloads/
+/key/
+*.mp4
+*.webm
+*.mkv
