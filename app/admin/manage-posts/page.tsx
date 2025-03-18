@@ -180,8 +180,8 @@ export default function ManagePostsPage() {
       header: "Status",
       key: "status",
       render: (noticia: Noticia) => (
-        <Badge variant={noticia.status === "publicado" ? "default" : "secondary"}> 
-          {noticia.status === "publicado" ? "Publicado" : "Rascunho"}
+        <Badge variant={noticia.status === "PUBLIC" ? "default" : "secondary"}> 
+          {noticia.status === "PUBLIC" ? "Publicado" : "Rascunho"}
         </Badge>
       )
     },

@@ -258,9 +258,10 @@ export function VideoManager() {
             Gerencie os vídeos da plataforma
           </p>
         </div>
-        <VideoCreateDialog 
-          isOpen={isCreateDialogOpen}
-          onClose={(isOpen) => {
+        <VideoCreateDialog
+          categories={videosData?.categories}
+          open={isCreateDialogOpen}
+          onOpenChange={(isOpen) => {
             setIsCreateDialogOpen(isOpen);
             if (!isOpen) {
               queryClient.invalidateQueries({ queryKey: ["videos"] });

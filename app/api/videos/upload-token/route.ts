@@ -22,6 +22,9 @@ export async function GET() {
       cors_origin: origin,
       new_asset_settings: {
         playback_policy: ["public"],
+        mp4_support: "standard",
+        normalize_audio: true,
+        test: false
       },
     });
 

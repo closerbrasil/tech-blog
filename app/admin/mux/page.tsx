@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { VideoList } from '@/components/mux/VideoList';
-import { VideoStats } from '@/components/mux/VideoStats';
+import { VideoList } from '@/components/admin/mux/VideoList';
+import { VideoStats } from '@/components/admin/mux/VideoStats';
 import { useToast } from '@/components/ui/use-toast';
 
 interface Video {
@@ -16,9 +16,13 @@ interface Video {
   thumbnail_url?: string;
 }
 
+// Aumentando o número de itens por página após otimizações de layout
+const ITEMS_PER_PAGE = 8;
+
 export default function MuxDashboard() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   const fetchVideos = async () => {
@@ -55,7 +59,7 @@ export default function MuxDashboard() {
       });
     } catch (error) {
       console.error('Erro ao excluir vídeo:', error);
-      throw error; // Propagar o erro para o componente VideoList
+      throw error;
     }
   };
 
@@ -63,7 +67,7 @@ export default function MuxDashboard() {
     fetchVideos();
   }, []);
 
-  // Calcular estatísticas
+  // Calcular estatísticas usando todos os vídeos
   const stats = {
     totalVideos: videos.length,
     totalDuration: videos.reduce((acc, video) => acc + video.duration, 0),
@@ -71,30 +75,52 @@ export default function MuxDashboard() {
     erroredVideos: videos.filter(v => v.status.toLowerCase() === 'errored').length,
   };
 
+  // Calcular paginação
+  const totalPages = Math.ceil(videos.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedVideos = videos.slice(startIndex, endIndex);
+
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="animate-pulse space-y-6">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-muted rounded-lg" />
-            ))}
+      <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+        <div className="flex-1 p-3 flex flex-col overflow-hidden">
+          <div className="animate-pulse space-y-3 flex-none">
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-20 bg-muted rounded-lg" />
+              ))}
+            </div>
           </div>
-          <div className="h-96 bg-muted rounded-lg" />
+          <div className="flex-1 mt-3 bg-muted rounded-lg min-h-0" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Gerenciador de Vídeos</h1>
-      <VideoStats {...stats} />
-      <VideoList
-        videos={videos}
-        onDelete={handleDelete}
-        onRefresh={fetchVideos}
-      />
+    <div className="h-[calc(100vh-4rem)] flex flex-col overflow-hidden">
+      <div className="flex-1 p-3 flex flex-col overflow-hidden">
+        {/* Header Section - Altura fixa */}
+        <div className="flex-none">
+          <h1 className="text-xl font-semibold tracking-tight mb-2">Gerenciador de Vídeos</h1>
+          <VideoStats {...stats} />
+        </div>
+        
+        {/* Main Content - Altura flexível */}
+        <div className="flex-1 mt-3 min-h-0">
+          <VideoList
+            videos={paginatedVideos}
+            onDelete={handleDelete}
+            onRefresh={fetchVideos}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            itemsPerPage={ITEMS_PER_PAGE}
+            totalItems={videos.length}
+          />
+        </div>
+      </div>
     </div>
   );
 }

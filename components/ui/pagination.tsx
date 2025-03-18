@@ -1,17 +1,80 @@
 import * as React from 'react';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
-import { ButtonProps, buttonVariants } from '@/components/ui/button';
+import { Button, ButtonProps, buttonVariants } from '@/components/ui/button';
 
-const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
-  <nav
-    role="navigation"
-    aria-label="pagination"
-    className={cn('mx-auto flex w-full justify-center', className)}
-    {...props}
-  />
-);
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+  return (
+    <nav role="navigation" aria-label="Paginação" className="flex items-center justify-center gap-2 py-4">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage <= 1}
+        className="h-8 w-8"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        <span className="sr-only">Página anterior</span>
+      </Button>
+
+      <div className="flex items-center gap-2">
+        {[...Array(totalPages)].map((_, i) => {
+          const page = i + 1;
+          const isCurrentPage = page === currentPage;
+
+          // Mostrar apenas páginas próximas à atual
+          if (
+            page === 1 ||
+            page === totalPages ||
+            (page >= currentPage - 1 && page <= currentPage + 1)
+          ) {
+            return (
+              <Button
+                key={page}
+                variant={isCurrentPage ? "default" : "outline"}
+                size="icon"
+                onClick={() => onPageChange(page)}
+                className="h-8 w-8"
+                aria-current={isCurrentPage ? "page" : undefined}
+                aria-label={`Página ${page}`}
+              >
+                {page}
+              </Button>
+            );
+          }
+
+          // Mostrar reticências para páginas omitidas
+          if (page === currentPage - 2 || page === currentPage + 2) {
+            return (
+              <span key={page} className="px-1" aria-hidden="true">
+                ...
+              </span>
+            );
+          }
+
+          return null;
+        })}
+      </div>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage >= totalPages}
+        className="h-8 w-8"
+      >
+        <ChevronRight className="h-4 w-4" />
+        <span className="sr-only">Próxima página</span>
+      </Button>
+    </nav>
+  );
+}
 Pagination.displayName = 'Pagination';
 
 const PaginationContent = React.forwardRef<

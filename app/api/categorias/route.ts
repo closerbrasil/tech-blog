@@ -31,7 +31,6 @@ export async function GET() {
       throw new Error('Nenhuma categoria encontrada');
     }
 
-    console.log('Categorias encontradas:', result.rows); // Log para debug
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Erro ao buscar categorias:', error);

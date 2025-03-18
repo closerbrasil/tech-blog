@@ -1,62 +1,42 @@
 import { NextResponse } from 'next/server';
 import Mux from '@mux/mux-node';
-import { sql } from '@vercel/postgres';
 
 const muxClient = new Mux({
-  tokenId: process.env.MUX_TOKEN_ID!,
-  tokenSecret: process.env.MUX_TOKEN_SECRET!,
+  tokenId: process.env.MUX_TOKEN_ID || '',
+  tokenSecret: process.env.MUX_TOKEN_SECRET || '',
 });
-
-interface VideoRow {
-  id: string;
-  title: string;
-  asset_id: string;
-  playback_id: string;
-  status: string;
-  duration: number;
-  created_at: string;
-  thumbnail_url?: string;
-}
 
 export async function GET() {
   try {
-    // Buscar vídeos do banco de dados
-    const result = await sql<VideoRow>`
-      SELECT 
-        v.id,
-        v.titulo as title,
-        v.asset_id,
-        v.playback_id,
-        v.status,
-        v.duracao as duration,
-        v.criado_em as created_at,
-        v.thumbnail_url
-      FROM videos v
-      ORDER BY v.criado_em DESC
-    `;
+    // Buscar todos os assets do Mux
+    const { data: assets } = await muxClient.video.assets.list({
+      limit: 100
+    });
 
-    // Para cada vídeo no banco, verificar o status atual no Mux
-    const videosWithStatus = await Promise.all(
-      result.rows.map(async (video: VideoRow) => {
-        try {
-          const asset = await muxClient.video.assets.retrieve(video.asset_id);
-          return {
-            ...video,
-            status: asset.status,
-            duration: asset.duration || video.duration,
-          };
-        } catch (error) {
-          console.error(`Erro ao buscar status do vídeo ${video.asset_id}:`, error);
-          return video;
-        }
-      })
-    );
+    // Formatar os dados para o frontend
+    const videos = assets.map(asset => ({
+      id: asset.id,
+      title: asset.meta?.title || `Vídeo ${asset.id.slice(-6)}`, // Título padrão se não houver
+      asset_id: asset.id,
+      playback_id: asset.playback_ids?.[0]?.id,
+      status: asset.status,
+      duration: asset.duration || 0,
+      created_at: asset.created_at,
+      thumbnail_url: asset.playback_ids?.[0]?.id 
+        ? `https://image.mux.com/${asset.playback_ids[0].id}/thumbnail.jpg?time=0`
+        : undefined,
+      views: asset.tracks?.length || 0, // Número de faixas como proxy para visualizações
+      meta: asset.meta || {} // Preservar metadados adicionais
+    }));
 
-    return NextResponse.json(videosWithStatus);
+    // Ordenar por data de criação (mais recentes primeiro)
+    videos.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    return NextResponse.json(videos);
   } catch (error) {
     console.error('Erro ao buscar vídeos:', error);
     return NextResponse.json(
-      { error: 'Erro ao buscar vídeos' },
+      { error: 'Erro ao buscar vídeos do Mux' },
       { status: 500 }
     );
   }

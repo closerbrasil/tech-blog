@@ -2,24 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { mcp_neon_run_sql } from '@/lib/db';
 import { insertAutorSchema } from '@/shared/schema';
 
-type RouteContext = {
-  params: {
-    id: string;
-  };
-};
-
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await props.params;
+    
     const result = await mcp_neon_run_sql({
       params: {
         projectId: process.env.NEON_PROJECT_ID!,
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           SELECT * FROM autores 
-          WHERE id = '${context.params.id}'
+          WHERE id = '${id}'
         `
       }
     });
@@ -42,9 +38,11 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  context: RouteContext
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await props.params;
+    
     const data = await request.json();
     const validatedData = insertAutorSchema.partial().parse(data);
     const fields = Object.keys(validatedData) as Array<keyof typeof validatedData>;
@@ -63,7 +61,7 @@ export async function PATCH(
         sql: `
           UPDATE autores 
           SET ${setClause}, atualizado_em = NOW()
-          WHERE id = '${context.params.id}'
+          WHERE id = '${id}'
           RETURNING *
         `
       }
@@ -87,16 +85,18 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext
+  props: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await props.params;
+    
     const result = await mcp_neon_run_sql({
       params: {
         projectId: process.env.NEON_PROJECT_ID!,
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           DELETE FROM autores 
-          WHERE id = '${context.params.id}'
+          WHERE id = '${id}'
           RETURNING id
         `
       }

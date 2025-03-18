@@ -86,29 +86,42 @@ export function MuxVideoUploader({ onUploadComplete }: VideoUploaderProps) {
 
   const handleUploadSuccess = async () => {
     try {
-      // Aguarda um momento para garantir que o upload foi processado
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let attempts = 0;
+      const maxAttempts = 10;
+      const initialDelay = 1000;
+      const maxDelay = 5000;
 
-      // Faz polling para obter o asset_id e playback_id
-      const response = await fetch(`/api/videos/check-upload/${uploadId}`);
-      if (!response.ok) {
-        throw new Error('Erro ao verificar status do upload');
-      }
+      const checkUploadStatus = async () => {
+        const response = await fetch(`/api/videos/check-upload/${uploadId}`);
+        if (!response.ok) {
+          throw new Error('Erro ao verificar status do upload');
+        }
+        return await response.json();
+      };
 
-      const data = await response.json();
-      if (data.asset_id && data.playback_id) {
-        setIsUploading(false);
-        setUploadProgress(100);
-        onUploadComplete(data.playback_id, data.asset_id);
+      while (attempts < maxAttempts) {
+        const data = await checkUploadStatus();
         
-        toast({
-          title: "Upload concluído",
-          description: "O vídeo foi enviado com sucesso!",
-          variant: "default",
-        });
-      } else {
-        throw new Error('IDs do vídeo não disponíveis');
+        if (data.asset_id && data.playback_id) {
+          setIsUploading(false);
+          setUploadProgress(100);
+          onUploadComplete(data.playback_id, data.asset_id);
+          
+          toast({
+            title: "Upload concluído",
+            description: "O vídeo foi enviado com sucesso!",
+            variant: "default",
+          });
+          return;
+        }
+
+        attempts++;
+        // Exponential backoff com limite máximo
+        const delay = Math.min(initialDelay * Math.pow(1.5, attempts), maxDelay);
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
+
+      throw new Error('Tempo limite excedido ao processar o vídeo');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao processar o vídeo";
       setError(errorMessage);
@@ -191,6 +204,7 @@ export function MuxVideoUploader({ onUploadComplete }: VideoUploaderProps) {
           }
         }}
         maxFileSize={2147483648} // 2GB em bytes
+        chunkSize={20971520} // 20MB chunks para melhor performance
       >
         {isUploading ? (
           <div className="w-full max-w-md space-y-4">

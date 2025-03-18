@@ -1,364 +1,232 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useToast } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Plus, Loader2 } from "lucide-react";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
-import { VideoForm } from "./VideoForm";
-import { MuxVideoUploader } from "./MuxVideoUploader";
-import type { VideoFormValues } from "./types";
-import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, AlertCircle, Link as LinkIcon } from 'lucide-react';
+
+const formSchema = z.object({
+  url: z.string().url('URL inválida').min(1, 'URL é obrigatória'),
+  category_id: z.string().min(1, 'Categoria é obrigatória'),
+});
 
 interface VideoCreateDialogProps {
-  isOpen: boolean;
-  onClose: (isOpen: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+  categories: { id: string; name: string }[];
 }
 
-interface FormData {
-  categorias: Array<{
-    id: string;
-    nome: string;
-  }>;
-  autores: Array<{
-    id: string;
-    nome: string;
-  }>;
-}
+type FormValues = z.infer<typeof formSchema>;
 
-export function VideoCreateDialog({ isOpen, onClose }: VideoCreateDialogProps) {
+export function VideoCreateDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  categories,
+}: VideoCreateDialogProps) {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
-  const [videoId, setVideoId] = useState<string>("");
-  const [assetId, setAssetId] = useState<string>("");
-  const [form, setForm] = useState({
-    titulo: "",
-    descricao: "",
-    categoria_id: "",
-    autor_id: "",
-    status: "PRIVATE",
-    conteudo: "",
-    meta_descricao: "",
-    slug: "",
-    recursos: "[]",
-    capitulos: "[]",
-    plataforma: "mux"
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
+  const [existingVideo, setExistingVideo] = useState<{ url: string; title: string } | null>(null);
 
-  // Buscar dados do formulário usando React Query
-  const { data: formData, isLoading: isLoadingFormData } = useQuery<FormData>({
-    queryKey: ['formData'],
-    queryFn: async () => {
-      const response = await fetch("/api/videos/get-form-data");
-      if (!response.ok) {
-        throw new Error("Erro ao carregar dados do formulário");
-      }
-      const data = await response.json();
-      return data;
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      url: '',
+      category_id: '',
     },
-    enabled: isOpen,
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSubmit = async () => {
-    if (!videoId || !assetId) {
-      toast({
-        title: "Erro",
-        description: "É necessário fazer o upload do vídeo primeiro",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const onSubmit = async (data: FormValues) => {
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
+      setError(null);
+      setProgress(10);
+      setExistingVideo(null);
 
-      // Gerar slug a partir do título
-      const slug = form.titulo
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "");
-      
-      const requestData = {
-        ...form,
-        video_id: videoId,
-        asset_id: assetId,
-        slug,
-        meta_descricao: form.descricao,
-        conteudo: form.descricao,
-      };
-
-      const response = await fetch("/api/videos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestData),
+      const response = await fetch('/api/admin/youtube-downloader', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
       });
 
-      const responseData = await response.json();
+      if (!response.ok) {
+        if (response.status === 409) {
+          const errorData = await response.json();
+          setExistingVideo({
+            url: errorData.existingUrl,
+            title: errorData.title || 'Vídeo existente'
+          });
+          setError('Este vídeo já foi baixado anteriormente.');
+          return;
+        }
+        throw new Error('Erro ao baixar o vídeo');
+      }
 
-      if (!response.ok) throw new Error(`Erro ao criar vídeo: ${responseData.error || responseData.details || 'Erro desconhecido'}`);
-
+      setProgress(100);
       toast({
-        title: "Sucesso",
-        description: "Vídeo criado com sucesso",
+        title: 'Sucesso!',
+        description: 'Vídeo baixado com sucesso.',
       });
-      onClose(false);
-    } catch (error) {
+
+      form.reset();
+      onSuccess?.();
+      onOpenChange(false);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : 'Erro ao baixar o vídeo');
       toast({
-        title: "Erro",
-        description: "Não foi possível criar o vídeo",
-        variant: "destructive",
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível baixar o vídeo. Tente novamente.',
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  if (isLoadingFormData) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[600px]">
-          <div className="flex items-center justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Carregando...</span>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      form.reset();
+      setError(null);
+      setProgress(0);
+      setExistingVideo(null);
+    }
+    onOpenChange(newOpen);
+  };
 
   return (
-    <>
-      <Button 
-        className={cn(
-          "dark:hover:bg-primary/20",
-          "transition-colors"
-        )}
-        onClick={() => onClose(!isOpen)}
-      >
-        <Plus className="mr-2 h-4 w-4" />
-        Novo vídeo
-      </Button>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Baixar vídeo do YouTube</DialogTitle>
+          <DialogDescription>
+            Cole a URL do vídeo do YouTube que você deseja baixar.
+          </DialogDescription>
+        </DialogHeader>
 
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent 
-          className="sm:max-w-[600px]"
-          onInteractOutside={(e) => {
-            if (isLoading) {
-              e.preventDefault();
-            }
-          }}
-          onEscapeKeyDown={(e) => {
-            if (isLoading) {
-              e.preventDefault();
-            }
-          }}
-        >
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Criar novo vídeo</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Primeiro faça o upload do vídeo, depois preencha os detalhes.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            {/* Botão para teste da API */}
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const response = await fetch("/api/videos/test-connection", {
-                      method: "GET",
-                    });
-                    const data = await response.json();
-                    toast({
-                      title: "Resultado do teste",
-                      description: `Conexão com o banco: ${data.dbConnected ? "OK" : "Falha"}`,
-                    });
-                  } catch (error) {
-                    toast({
-                      title: "Erro no teste",
-                      description: "Erro ao testar conexão com o banco",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Testar Conexão
-              </Button>
-              
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const response = await fetch("/api/videos/create-schema", {
-                      method: "POST",
-                    });
-                    const data = await response.json();
-                    console.log("Criação de esquema:", data);
-                    toast({
-                      title: data.success ? "Sucesso" : "Erro",
-                      description: data.message,
-                      variant: data.success ? "default" : "destructive",
-                    });
-                  } catch (error) {
-                    console.error("Erro ao criar esquema:", error);
-                    toast({
-                      title: "Erro ao criar esquema",
-                      description: "Verifique o console para detalhes",
-                      variant: "destructive",
-                    });
-                  }
-                }}
-              >
-                Criar Esquema
-              </Button>
-            </div>
-            
-            {!videoId && (
-              <div className="space-y-4">
-                <MuxVideoUploader
-                  onUploadComplete={(playbackId: string, muxAssetId: string) => {
-                    setVideoId(playbackId);
-                    setAssetId(muxAssetId);
-                  }}
-                />
-              </div>
-            )}
-
-            {videoId && (
-              <div className="max-h-[80vh] overflow-y-auto">
-                <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="titulo">Título</Label>
-                    <Input
-                      id="titulo"
-                      value={form.titulo}
-                      onChange={(e) => handleInputChange("titulo", e.target.value)}
-                      placeholder="Digite o título do vídeo"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="descricao">Descrição</Label>
-                    <Textarea
-                      id="descricao"
-                      value={form.descricao}
-                      onChange={(e) => handleInputChange("descricao", e.target.value)}
-                      placeholder="Digite a descrição do vídeo"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="categoria">Categoria</Label>
-                    <Select
-                      value={form.categoria_id}
-                      onValueChange={(value) => handleInputChange("categoria_id", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData?.categorias?.map((categoria) => (
-                          <SelectItem key={categoria.id} value={categoria.id}>
-                            {categoria.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="autor">Autor</Label>
-                    <Select
-                      value={form.autor_id}
-                      onValueChange={(value) => handleInputChange("autor_id", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um autor" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData?.autores?.map((autor) => (
-                          <SelectItem key={autor.id} value={autor.id}>
-                            {autor.nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="status">Status</Label>
-                    <div className="col-span-3">
-                      <Select
-                        value={form.status}
-                        onValueChange={(value) => handleInputChange("status", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PRIVATE">Privado</SelectItem>
-                          <SelectItem value="PUBLIC">Público</SelectItem>
-                        </SelectContent>
-                      </Select>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL do vídeo</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <LinkIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input placeholder="https://youtube.com/..." className="pl-8" {...field} />
                     </div>
-                  </div>
-                </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="category_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Categoria principal</FormLabel>
+                  <FormControl>
+                    <select
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                      {...field}
+                    >
+                      <option value="">Selecione uma categoria</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Erro</AlertTitle>
+                <AlertDescription className="mt-2">
+                  {error}
+                  {existingVideo && (
+                    <div className="mt-2">
+                      <a
+                        href={existingVideo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline flex items-center gap-1"
+                      >
+                        <LinkIcon className="h-4 w-4" />
+                        Ver vídeo existente
+                      </a>
+                    </div>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isSubmitting && (
+              <div className="space-y-2">
+                <Progress value={progress} />
+                <p className="text-sm text-muted-foreground">
+                  {progress < 100 ? 'Baixando vídeo...' : 'Concluído!'}
+                </p>
               </div>
             )}
-          </div>
 
-          {isLoading && (
-            <div className="absolute inset-0 bg-background/80 flex items-center justify-center rounded-lg">
-              <div className="flex items-center space-x-2">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="text-sm font-medium">Criando vídeo...</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => onClose(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSubmit} disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Criando...
-                </>
-              ) : (
-                "Criar vídeo"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Baixando...
+                  </>
+                ) : (
+                  'Baixar vídeo'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 } 

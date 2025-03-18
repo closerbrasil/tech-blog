@@ -1,21 +1,20 @@
 import { NextResponse } from 'next/server';
 import { mcp_neon_run_sql } from '@/lib/db';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: Request, { params }: RouteParams) {
+export async function GET(
+  request: Request, 
+  props: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await props.params;
+    
     const result = await mcp_neon_run_sql({
       params: {
         projectId: process.env.NEON_PROJECT_ID!,
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           SELECT * FROM categorias 
-          WHERE id = '${params.id}'
+          WHERE id = '${id}'
         `
       }
     });
@@ -36,8 +35,13 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function PATCH(request: Request, { params }: RouteParams) {
+export async function PATCH(
+  request: Request, 
+  props: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await props.params;
+    
     const data = await request.json();
     const fields = Object.keys(data);
     const setClause = fields.map(field => `${field} = '${data[field]}'`).join(', ');
@@ -49,7 +53,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         sql: `
           UPDATE categorias 
           SET ${setClause}, atualizado_em = NOW()
-          WHERE id = '${params.id}'
+          WHERE id = '${id}'
           RETURNING *
         `
       }
@@ -71,15 +75,20 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: Request, { params }: RouteParams) {
+export async function DELETE(
+  request: Request, 
+  props: { params: Promise<{ id: string }> }
+) {
   try {
+    const { id } = await props.params;
+    
     const result = await mcp_neon_run_sql({
       params: {
         projectId: process.env.NEON_PROJECT_ID!,
         databaseName: process.env.NEON_DATABASE_NAME || 'neondb',
         sql: `
           DELETE FROM categorias 
-          WHERE id = '${params.id}'
+          WHERE id = '${id}'
           RETURNING id
         `
       }
